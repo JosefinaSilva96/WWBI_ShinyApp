@@ -29,6 +29,7 @@ library(countrycode)
 library(bslib)
 library(ggthemes)
 library(shinyBS)
+library(tibble)
 
 ### Load data sets ----
 
@@ -2590,38 +2591,33 @@ server <- function(input, output, session) {
   
   #Download cvs 
   
+  # Keep the ID EXACTLY as requested
+  
   output$dl_csv_public_workforce <- downloadHandler(
     filename = function() paste0("public_workforce_data_", Sys.Date(), ".csv"),
     contentType = "text/csv",
     content  = function(file) {
       
-      # ---- inputs (robust guards) ----
+      # --- inputs ---
       sel_countries <- input$countries_workforce
       if (is.null(sel_countries) || length(sel_countries) < 1) sel_countries <- character(0)
       sel_countries <- unique(as.character(sel_countries[!is.na(sel_countries) & nzchar(sel_countries)]))
       
-      # input$selected_country can be NULL or length-0 -> guard both
       sc <- input$selected_country
-      if (is.null(sc) || length(sc) < 1) {
-        sel_country <- NA_character_
-      } else {
-        sel_country <- as.character(sc[1])
-        if (!nzchar(sel_country)) sel_country <- NA_character_
-      }
+      sel_country <- if (is.null(sc) || length(sc) < 1) NA_character_ else as.character(sc[1])
+      if (!is.na(sel_country) && !nzchar(sel_country)) sel_country <- NA_character_
       
-      # ---- get source data safely ----
-      fw <- tryCatch(filtered_workforce_data(), error = function(e) NULL)
-      if (is.null(fw)) {
-        # fallback to full table if your reactive isn't available
-        fw <- public_sector_workforce
-      }
+      # --- source data (fallback if reactive not found) ---
+      fw <- tryCatch(
+        if (exists("filtered_workforce_data")) filtered_workforce_data() else public_sector_workforce,
+        error = function(e) public_sector_workforce
+      )
       
-      # ---- Graph 1: multi-country (last-year per country/indicator if you want it) ----
+      # --- Graph 1: multi-country, last year per country/indicator ---
       d1 <- tryCatch({
         if (length(sel_countries) == 0L) {
           tibble::tibble()
         } else {
-          # OPTIONAL: keep only last-year rows per country/indicator
           fw |>
             dplyr::filter(.data$country_name %in% sel_countries) |>
             dplyr::group_by(.data$country_name, .data$indicator_name) |>
@@ -2632,7 +2628,7 @@ server <- function(input, output, session) {
         }
       }, error = function(e) tibble::tibble())
       
-      # ---- Graph 2: single-country (first & last year means) ----
+      # --- Graph 2: single-country, first & last year averages ---
       d2 <- tryCatch({
         if (is.na(sel_country)) {
           tibble::tibble()
@@ -2660,7 +2656,7 @@ server <- function(input, output, session) {
         }
       }, error = function(e) tibble::tibble())
       
-      # ---- combine & write ----
+      # --- combine & write ---
       out <- dplyr::bind_rows(d1, d2) |>
         dplyr::arrange(.data$graph, .data$country_name, .data$indicator_name, .data$year)
       
@@ -2678,6 +2674,8 @@ server <- function(input, output, session) {
     }
   )
   
+  # (Optional) only AFTER the output exists:
+  outputOptions(output, "dl_csv_public_workforce", suspendWhenHidden = FALSE)
   
   #Tertiary education
   
