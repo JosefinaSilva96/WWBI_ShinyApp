@@ -129,6 +129,14 @@ pay_compression_wide <- readRDS(file.path(data_path, "Data", "pay_compression_wi
 library(shiny)
 library(bslib)
 
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+sanitize_vec <- function(x) {
+  x <- x %||% character(0)
+  x <- as.character(x)
+  unique(x[!is.na(x) & nzchar(x)])
+}
+
 ui <- bootstrapPage(
   theme = bs_theme(version = 5, bootswatch = "sandstone"),
   
