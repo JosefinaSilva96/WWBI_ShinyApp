@@ -3704,8 +3704,11 @@
     }
   },
   "files": {
+    ".RData": {
+      "checksum": "55141754faf6351374743ddfca35a9cc"
+    },
     "app.R": {
-      "checksum": "34dab53d9c201b2620e91c580ea55815"
+      "checksum": "9555be0ce45894b772e6ac5c74faef33"
     },
     "Data/data_gdp.dta": {
       "checksum": "8e6cd9c7dadd8c69c7e521d669e39288"
