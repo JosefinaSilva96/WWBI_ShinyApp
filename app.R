@@ -2592,56 +2592,78 @@ server <- function(input, output, session) {
   
   output$dl_csv_public_workforce <- downloadHandler(
     filename = function() paste0("public_workforce_data_", Sys.Date(), ".csv"),
+    contentType = "text/csv",
     content  = function(file) {
       
-      # ---------- Graph 1 data (multi-country, last year available per country/indicator)
+      # ---- inputs (robust guards) ----
+      sel_countries <- input$countries_workforce
+      if (is.null(sel_countries) || length(sel_countries) < 1) sel_countries <- character(0)
+      sel_countries <- unique(as.character(sel_countries[!is.na(sel_countries) & nzchar(sel_countries)]))
+      
+      # input$selected_country can be NULL or length-0 -> guard both
+      sc <- input$selected_country
+      if (is.null(sc) || length(sc) < 1) {
+        sel_country <- NA_character_
+      } else {
+        sel_country <- as.character(sc[1])
+        if (!nzchar(sel_country)) sel_country <- NA_character_
+      }
+      
+      # ---- get source data safely ----
+      fw <- tryCatch(filtered_workforce_data(), error = function(e) NULL)
+      if (is.null(fw)) {
+        # fallback to full table if your reactive isn't available
+        fw <- public_sector_workforce
+      }
+      
+      # ---- Graph 1: multi-country (last-year per country/indicator if you want it) ----
       d1 <- tryCatch({
-        if (is.null(input$countries_workforce) || !length(input$countries_workforce)) {
+        if (length(sel_countries) == 0L) {
           tibble::tibble()
         } else {
-          filtered_workforce_data() %>%                      # your reactive
-            dplyr::filter(country_name %in% input$countries_workforce) %>%
-            dplyr::select(country_name, year, indicator_name, value_percentage) %>%
+          # OPTIONAL: keep only last-year rows per country/indicator
+          fw |>
+            dplyr::filter(.data$country_name %in% sel_countries) |>
+            dplyr::group_by(.data$country_name, .data$indicator_name) |>
+            dplyr::filter(.data$year == max(.data$year, na.rm = TRUE)) |>
+            dplyr::ungroup() |>
+            dplyr::select(.data$country_name, .data$year, .data$indicator_name, .data$value_percentage) |>
             dplyr::mutate(graph = "multi_country_last_year")
         }
       }, error = function(e) tibble::tibble())
       
-      # ---------- Graph 2 data (single country, first & last year, averaged by indicator)
+      # ---- Graph 2: single-country (first & last year means) ----
       d2 <- tryCatch({
-        if (is.null(input$selected_country) || !nzchar(input$selected_country)) {
+        if (is.na(sel_country)) {
           tibble::tibble()
         } else {
-          df2 <- public_sector_workforce %>%
-            dplyr::filter(country_name == input$selected_country)
+          df2 <- public_sector_workforce |>
+            dplyr::filter(.data$country_name == sel_country)
           
-          if (nrow(df2) == 0) {
+          if (nrow(df2) == 0L) {
             tibble::tibble()
           } else {
             first_year <- suppressWarnings(min(df2$year, na.rm = TRUE))
             last_year  <- suppressWarnings(max(df2$year, na.rm = TRUE))
-            
             if (!is.finite(first_year) || !is.finite(last_year)) {
               tibble::tibble()
             } else {
-              df2 %>%
-                dplyr::filter(year %in% c(first_year, last_year)) %>%
-                dplyr::group_by(year, indicator_name) %>%
-                dplyr::summarise(value_percentage = mean(value_percentage, na.rm = TRUE), .groups = "drop") %>%
-                dplyr::mutate(
-                  country_name = input$selected_country,
-                  graph = "single_country_first_last"
-                ) %>%
-                dplyr::select(country_name, year, indicator_name, value_percentage, graph)
+              df2 |>
+                dplyr::filter(.data$year %in% c(first_year, last_year)) |>
+                dplyr::group_by(.data$year, .data$indicator_name) |>
+                dplyr::summarise(value_percentage = mean(.data$value_percentage, na.rm = TRUE), .groups = "drop") |>
+                dplyr::mutate(country_name = sel_country,
+                              graph = "single_country_first_last") |>
+                dplyr::select(.data$country_name, .data$year, .data$indicator_name, .data$value_percentage, .data$graph)
             }
           }
         }
       }, error = function(e) tibble::tibble())
       
-      # ---------- Combine & write
-      out <- dplyr::bind_rows(d1, d2) %>%
-        dplyr::arrange(graph, country_name, indicator_name, year)
+      # ---- combine & write ----
+      out <- dplyr::bind_rows(d1, d2) |>
+        dplyr::arrange(.data$graph, .data$country_name, .data$indicator_name, .data$year)
       
-      # If everything is empty, still write a header-only CSV so the download works
       if (nrow(out) == 0) {
         out <- tibble::tibble(
           country_name = character(),
@@ -2655,6 +2677,7 @@ server <- function(input, output, session) {
       utils::write.csv(out, file, row.names = FALSE, na = "")
     }
   )
+  
   
   #Tertiary education
   
