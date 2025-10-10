@@ -2595,86 +2595,24 @@ server <- function(input, output, session) {
   
   output$dl_csv_public_workforce <- downloadHandler(
     filename = function() paste0("public_workforce_data_", Sys.Date(), ".csv"),
-    contentType = "text/csv",
     content  = function(file) {
+      req(input$countries_workforce)
       
-      # --- inputs ---
-      sel_countries <- input$countries_workforce
-      if (is.null(sel_countries) || length(sel_countries) < 1) sel_countries <- character(0)
-      sel_countries <- unique(as.character(sel_countries[!is.na(sel_countries) & nzchar(sel_countries)]))
+      df <- public_sector_workforce %>%
+        dplyr::filter(.data$country_name %in% input$countries_workforce) %>%
+        dplyr::select(.data$country_name, .data$year, .data$indicator_name, .data$value_percentage) %>%
+        tidyr::drop_na(.data$value_percentage) %>%
+        dplyr::mutate(
+          highlighted = .data$country_name == input$countries_workforce[1],  # match plot highlight
+          color_hex   = ifelse(.data$highlighted, "#B3242B", "#003366")
+        ) %>%
+        dplyr::arrange(.data$country_name, .data$indicator_name, .data$year)
       
-      sc <- input$selected_country
-      sel_country <- if (is.null(sc) || length(sc) < 1) NA_character_ else as.character(sc[1])
-      if (!is.na(sel_country) && !nzchar(sel_country)) sel_country <- NA_character_
-      
-      # --- source data (fallback if reactive not found) ---
-      fw <- tryCatch(
-        if (exists("filtered_workforce_data")) filtered_workforce_data() else public_sector_workforce,
-        error = function(e) public_sector_workforce
-      )
-      
-      # --- Graph 1: multi-country, last year per country/indicator ---
-      d1 <- tryCatch({
-        if (length(sel_countries) == 0L) {
-          tibble::tibble()
-        } else {
-          fw |>
-            dplyr::filter(.data$country_name %in% sel_countries) |>
-            dplyr::group_by(.data$country_name, .data$indicator_name) |>
-            dplyr::filter(.data$year == max(.data$year, na.rm = TRUE)) |>
-            dplyr::ungroup() |>
-            dplyr::select(.data$country_name, .data$year, .data$indicator_name, .data$value_percentage) |>
-            dplyr::mutate(graph = "multi_country_last_year")
-        }
-      }, error = function(e) tibble::tibble())
-      
-      # --- Graph 2: single-country, first & last year averages ---
-      d2 <- tryCatch({
-        if (is.na(sel_country)) {
-          tibble::tibble()
-        } else {
-          df2 <- public_sector_workforce |>
-            dplyr::filter(.data$country_name == sel_country)
-          
-          if (nrow(df2) == 0L) {
-            tibble::tibble()
-          } else {
-            first_year <- suppressWarnings(min(df2$year, na.rm = TRUE))
-            last_year  <- suppressWarnings(max(df2$year, na.rm = TRUE))
-            if (!is.finite(first_year) || !is.finite(last_year)) {
-              tibble::tibble()
-            } else {
-              df2 |>
-                dplyr::filter(.data$year %in% c(first_year, last_year)) |>
-                dplyr::group_by(.data$year, .data$indicator_name) |>
-                dplyr::summarise(value_percentage = mean(.data$value_percentage, na.rm = TRUE), .groups = "drop") |>
-                dplyr::mutate(country_name = sel_country,
-                              graph = "single_country_first_last") |>
-                dplyr::select(.data$country_name, .data$year, .data$indicator_name, .data$value_percentage, .data$graph)
-            }
-          }
-        }
-      }, error = function(e) tibble::tibble())
-      
-      # --- combine & write ---
-      out <- dplyr::bind_rows(d1, d2) |>
-        dplyr::arrange(.data$graph, .data$country_name, .data$indicator_name, .data$year)
-      
-      if (nrow(out) == 0) {
-        out <- tibble::tibble(
-          country_name = character(),
-          year = numeric(),
-          indicator_name = character(),
-          value_percentage = numeric(),
-          graph = character()
-        )
-      }
-      
-      utils::write.csv(out, file, row.names = FALSE, na = "")
+      utils::write.csv(df, file, row.names = FALSE, na = "")
     }
   )
   
-  # (Optional) only AFTER the output exists:
+  # keep it active even if the button is hidden (optional)
   outputOptions(output, "dl_csv_public_workforce", suspendWhenHidden = FALSE)
   
   #Tertiary education
