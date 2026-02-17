@@ -323,6 +323,10 @@ ui <- bootstrapPage(
   object-fit: contain;
   display:block;
 }
+/* make the middle logo bigger */
+.logos-row img.bl-logo{
+  height: 95px !important;   /* prueba 90-110 */
+}
 
       /* Buttons */
       .btn, .btn-primary, .dl-btn {
