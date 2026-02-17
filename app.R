@@ -325,7 +325,7 @@ ui <- bootstrapPage(
 }
 /* make the middle logo bigger */
 .logos-row img.bl-logo{
-  height: 110px !important;   /* prueba 90-110 */
+  height: 130px !important;   /* prueba 90-110 */
 }
 
       /* Buttons */
