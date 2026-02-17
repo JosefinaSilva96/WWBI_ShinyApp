@@ -559,7 +559,7 @@ server <- function(input, output, session) {
             4,
             div(class = "logo-wrap",
                 tags$img(
-                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI/main/www/wbg_institutions_logo.png",
+                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI_ShinyApp/logos/wbg_institutions_logo.png",
                   class = "wb-logo wb-logo--right", alt = "WBG Institutions"
                 ))
           ),
@@ -567,7 +567,7 @@ server <- function(input, output, session) {
             4,
             div(class = "logo-wrap",
                 tags$img(
-                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI/main/www/bl_logo.png",
+                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI_ShinyApp/logos/bl_logo.png",
                   class = "bl-logo", alt = "Bureaucracy Lab"
                 ))
           ),
@@ -575,7 +575,7 @@ server <- function(input, output, session) {
             4,
             div(class = "logo-wrap",
                 tags$img(
-                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI/main/www/wbg_dec_logo.png",
+                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI_ShinyApp/logos/wbg_dec_logo.png",
                   class = "wb-logo wb-logo--dec", alt = "WBG DEC"
                 ))
           )
