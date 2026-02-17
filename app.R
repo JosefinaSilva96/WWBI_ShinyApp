@@ -1195,7 +1195,7 @@ server <- function(input, output, session) {
           column(
             width = 12,
             div(class = "text-end",
-                downloadButton("", "Download data CVS", class = "dl-btn"))
+                downloadButton("dl_public_emp_data", "Download data CVS", class = "dl-btn"))
           )
         )
       )
@@ -6287,54 +6287,63 @@ server <- function(input, output, session) {
   #Pay compression 
   
   output$paycompression_plot <- renderPlotly({
-    req(input$countries_first)  # Ensure at least one country is selected
+    req(input$countries_first)
     
+    # 1) Filter + coerce columns to numeric (handles list-columns safely)
     filtered_data_df <- pay_compression_wide %>%
-      filter(country_name %in% input$countries_first)
+      dplyr::filter(country_name %in% input$countries_first) %>%
+      dplyr::mutate(
+        Public_Sector = as.numeric(unlist(Public_Sector)),
+        Private_Sector = as.numeric(unlist(Private_Sector))
+      ) %>%
+      tidyr::drop_na(Public_Sector, Private_Sector)
     
-    # Fallback if no data
+    # 2) Fallback if no data
     if (nrow(filtered_data_df) == 0) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper", yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
+      return(
+        plotly_empty(type = "scatter") %>%
+          layout(
+            title = "No data available",
+            annotations = list(
+              text = "No data available for the selected country/countries.",
+              xref = "paper", yref = "paper",
+              showarrow = FALSE,
+              font = list(size = 16),
+              x = 0.5, y = 0.5
+            ),
+            plot_bgcolor = "white",
+            paper_bgcolor = "white"
+          )
+      )
     }
     
-    # Fallback if required columns are missing
+    # 3) Extra safety: ensure required columns exist (after mutate)
     if (!all(c("Public_Sector", "Private_Sector") %in% colnames(filtered_data_df))) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = "Data error",
-                 annotations = list(
-                   text = "Required columns (Public_Sector, Private_Sector) are missing.",
-                   xref = "paper", yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16, color = "red"),
-                   x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
+      return(
+        plotly_empty(type = "scatter") %>%
+          layout(
+            title = "Data error",
+            annotations = list(
+              text = "Required columns (Public_Sector, Private_Sector) are missing.",
+              xref = "paper", yref = "paper",
+              showarrow = FALSE,
+              font = list(size = 16),
+              x = 0.5, y = 0.5
+            ),
+            plot_bgcolor = "white",
+            paper_bgcolor = "white"
+          )
+      )
     }
     
-    # Prepare data and trendline
+    # 4) Color: highlight first selected country
     filtered_data_df <- filtered_data_df %>%
-      mutate(color = ifelse(country_name == input$countries_first[1], "#B3242B", "#003366"))
+      dplyr::mutate(
+        color = ifelse(country_name == input$countries_first[1], "#B3242B", "#003366")
+      )
     
-    trendline_model <- lm(Public_Sector ~ Private_Sector, data = filtered_data_df)
-    trendline_values <- predict(trendline_model, newdata = filtered_data_df)
-    
-    # Build the plot
-    plot_ly() %>%
+    # 5) Build the scatter plot first
+    p <- plot_ly() %>%
       add_trace(
         data = filtered_data_df,
         x = ~Private_Sector,
@@ -6344,16 +6353,39 @@ server <- function(input, output, session) {
         text = ~country_name,
         textposition = "top center",
         marker = list(size = 10, color = ~color, opacity = 0.7),
-        name = "Country"              # <-- this changes "trace 0"
-      ) %>%
-      add_trace(
-        x = filtered_data_df$Private_Sector,
-        y = trendline_values,
-        type = "scatter",
-        mode = "lines",
-        line = list(color = "gray", dash = "dash"),
-        name = "Trendline"
-      ) %>%
+        name = "Country"
+      )
+    
+    # 6) Add trendline only if there are 2+ observations and variation
+    if (nrow(filtered_data_df) >= 2 &&
+        stats::sd(filtered_data_df$Private_Sector, na.rm = TRUE) > 0 &&
+        stats::sd(filtered_data_df$Public_Sector, na.rm = TRUE) > 0) {
+      
+      trendline_model <- lm(Public_Sector ~ Private_Sector, data = filtered_data_df)
+      
+      # Make a smooth line across x-range
+      x_seq <- seq(
+        min(filtered_data_df$Private_Sector, na.rm = TRUE),
+        max(filtered_data_df$Private_Sector, na.rm = TRUE),
+        length.out = 50
+      )
+      trend_df <- data.frame(Private_Sector = x_seq)
+      trend_df$Public_Sector_hat <- predict(trendline_model, newdata = trend_df)
+      
+      p <- p %>%
+        add_trace(
+          data = trend_df,
+          x = ~Private_Sector,
+          y = ~Public_Sector_hat,
+          type = "scatter",
+          mode = "lines",
+          line = list(color = "gray", dash = "dash"),
+          name = "Trendline"
+        )
+    }
+    
+    # 7) Layout
+    p %>%
       layout(
         title = "Pay Compression: Public vs. Private Sector (Latest Year)",
         xaxis = list(title = "Private Sector Pay Compression"),
@@ -6363,7 +6395,6 @@ server <- function(input, output, session) {
         paper_bgcolor = "white"
       )
   })
-  
   
   output$note_dotplot_pay <- renderText({
     "Note: This visualization explores pay compression in the public and private sectors across selected countries. Compression ratios are calculated based on the ratio of incomes at the 90th to the 10th percentile. The indicator shows the last year available for each selected country/region/income group(s)."
@@ -6543,22 +6574,65 @@ server <- function(input, output, session) {
       public_position <- private_position <- "unranked"
     }
     
-    # ---- plot (no color scale) ----
+    # ---- plot (with color) ----
+    df <- df %>%
+      dplyr::mutate(
+        highlight = ifelse(country_name == first_country, "Selected", "Other")
+      )
+    
     lim_min <- min(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
     lim_max <- max(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
     
-    plt <- ggplot2::ggplot(df, ggplot2::aes(x = .data$Private_Sector, y = .data$Public_Sector)) +
-      ggplot2::geom_point(size = 3) +
-      ggplot2::geom_text(ggplot2::aes(label = .data$country_name), vjust = -0.6, size = 3) +
-      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dotted") +   # 45° equality
-      ggplot2::geom_smooth(method = "lm", se = FALSE, linetype = "dashed", linewidth = 0.8) +  # trendline
-      ggplot2::coord_equal(xlim = c(lim_min, lim_max), ylim = c(lim_min, lim_max), expand = TRUE) +
+    plt <- ggplot2::ggplot(
+      df,
+      ggplot2::aes(
+        x = .data$Private_Sector,
+        y = .data$Public_Sector,
+        color = .data$highlight
+      )
+    ) +
+      ggplot2::geom_point(size = 4) +
+      ggplot2::geom_text(
+        ggplot2::aes(label = .data$country_name),
+        vjust = -0.6,
+        size = 3,
+        show.legend = FALSE
+      ) +
+      ggplot2::scale_color_manual(
+        values = c(
+          "Selected" = "#B3242B",  # dark red highlight
+          "Other"    = "#003366"   # WB blue
+        )
+      ) +
+      ggplot2::geom_abline(
+        slope = 1,
+        intercept = 0,
+        linetype = "dotted",
+        color = "gray50"
+      ) +
+      ggplot2::geom_smooth(
+        method = "lm",
+        se = FALSE,
+        linetype = "dashed",
+        linewidth = 0.8,
+        color = "gray40"
+      ) +
+      ggplot2::coord_equal(
+        xlim = c(lim_min, lim_max),
+        ylim = c(lim_min, lim_max),
+        expand = TRUE
+      ) +
       ggplot2::labs(
         title = "Pay Compression: Public vs. Private Sector",
         x = "Private Sector Pay Compression (P90/P10)",
-        y = "Public Sector Pay Compression (P90/P10)"
+        y = "Public Sector Pay Compression (P90/P10)",
+        color = NULL
       ) +
-      ggplot2::theme_minimal()
+      ggplot2::theme_minimal() +
+      ggplot2::theme(
+        legend.position = "bottom"
+      )
+    
     
     img_path <- tempfile(fileext = ".png")
     ok <- TRUE
