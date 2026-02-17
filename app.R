@@ -499,7 +499,7 @@ server <- function(input, output, session) {
             div(
               class = "logo-wrap",
               tags$img(
-                src = "logos/WBG-Institutions-Horizontal-CMYK-01.jpg",
+                src = "logos/WBG-Institutions-Horizontal-CMYK-01.jpeg",
                 class = "wb-logo wb-logo--right",
                 alt = "WBG Institutions"
               )
