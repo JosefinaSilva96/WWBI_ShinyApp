@@ -6593,15 +6593,21 @@ server <- function(input, output, session) {
     ) +
       ggplot2::geom_point(size = 4) +
       ggplot2::geom_text(
-        ggplot2::aes(label = .data$country_name),
+        data = df,
+        mapping = ggplot2::aes(
+          x = .data$Private_Sector,
+          y = .data$Public_Sector,
+          label = .data$country_name
+        ),
+        inherit.aes = FALSE,
         vjust = -0.6,
         size = 3,
-        show.legend = FALSE
+        color = "black"
       ) +
       ggplot2::scale_color_manual(
         values = c(
-          "Selected" = "#B3242B",  # dark red highlight
-          "Other"    = "#003366"   # WB blue
+          "First Selected Country" = "#B3242B",  # dark red highlight
+          "Other Countries"    = "#003366"   # WB blue
         )
       ) +
       ggplot2::geom_abline(
