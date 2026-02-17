@@ -555,31 +555,43 @@ server <- function(input, output, session) {
         # Logos
         fluidRow(
           class = "mb-3 logos-row",
+          
           column(
             4,
-            div(class = "logo-wrap",
-                tags$img(
-                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI_ShinyApp/main/logos/wbg_institutions_logo.png",
-                  class = "wb-logo wb-logo--right", alt = "WBG Institutions"
-                ))
+            div(
+              class = "logo-wrap",
+              tags$img(
+                src = "logos/wbg_institutions_logo.png",
+                class = "wb-logo wb-logo--right",
+                alt = "WBG Institutions"
+              )
+            )
           ),
+          
           column(
             4,
-            div(class = "logo-wrap",
-                tags$img(
-                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI_ShinyApp/main/logos/bl_logo.png",
-                  class = "bl-logo", alt = "Bureaucracy Lab"
-                ))
+            div(
+              class = "logo-wrap",
+              tags$img(
+                src = "logos/bl_logo.png",
+                class = "bl-logo",
+                alt = "Bureaucracy Lab"
+              )
+            )
           ),
+          
           column(
             4,
-            div(class = "logo-wrap",
-                tags$img(
-                  src = "https://raw.githubusercontent.com/JosefinaSilva96/WWBI_ShinyApp/main/logos/wbg_dec_logo.png",
-                  class = "wb-logo wb-logo--dec", alt = "WBG DEC"
-                ))
+            div(
+              class = "logo-wrap",
+              tags$img(
+                src = "logos/wbg_dec_logo.png",
+                class = "wb-logo wb-logo--dec",
+                alt = "WBG DEC"
+              )
+            )
           )
-        ),
+        ),  # <- cierra fluidRow
         
         h3("Overview"),
         accordion(
