@@ -507,7 +507,7 @@ server <- function(input, output, session) {
             div(
               class = "logo-wrap",
               tags$img(
-                src = "logos/57d518e1-4b7b-4ffb-9715-8dcfaad6e0f9.png",
+                src = "logos/bl_logo.png",
                 class = "bl-logo",
                 alt = "Bureaucracy Lab"
               )
