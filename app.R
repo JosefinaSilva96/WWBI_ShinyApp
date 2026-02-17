@@ -6577,7 +6577,7 @@ server <- function(input, output, session) {
     # ---- plot (with color) ----
     df <- df %>%
       dplyr::mutate(
-        highlight = ifelse(country_name == first_country, "Selected", "Other")
+        highlight = ifelse(country_name == first_country, "First Selected Country", "Other Countries")
       )
     
     lim_min <- min(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
