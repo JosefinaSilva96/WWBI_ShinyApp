@@ -143,56 +143,53 @@ ui <- bootstrapPage(
   
   # Put global CSS/JS in <head>
   tags$head(
-    # ------- Your styles (unchanged) -------
+    # ------- Styles (WB Clean palette) -------
     tags$style(HTML("
-      :root { --accent: #6fa8dc; }
+      :root {
+        --wb-navy: #002244;
+        --wb-blue: #003366;
+        --bg: #F4F6F8;
+        --card: #FFFFFF;
+        --soft: #E6F0F7;
+        --text: #1F2A33;
+        --accent: #003366;   /* buttons/links */
+        --border: #E0E6ED;
+      }
 
-      /* General page background and text color */
+      /* ===== GENERAL BACKGROUND & TEXT ===== */
       html, body { height: 100%; }
       body, .container-fluid, .main-container, .content-wrapper, .flex-grow-1 {
-        background-color: #002244 !important;
-        color: #ffffff !important;
+        background-color: var(--bg) !important;
+        color: var(--text) !important;
       }
 
-      /* Typography and panels */
-      h1, h2, h3, h4, h5, h6, p, .well, .card, .panel, .info-box, .custom-info-box, .box {
-        color: #ffffff !important;
-        background-color: transparent !important;
-        border: none !important;
+      /* Typography */
+      h1, h2, h3, h4, h5, h6 {
+        color: var(--wb-navy) !important;
+        font-weight: 600;
+      }
+      p, li, span, label {
+        color: var(--text) !important;
       }
 
-      /* Panels and wells with a border */
-      .well, .panel {
-        background-color: #002244 !important;
-        border: 1px solid var(--accent) !important;
-        border-radius: 8px;
-      }
+      /* Links */
+      a { color: var(--wb-blue) !important; text-decoration: none; }
+      a:hover { color: #0072CE !important; text-decoration: underline; }
 
-      /* Buttons */
-      .btn, .btn-primary {
-        background-color: var(--accent) !important;
-        border: none !important;
-      }
-      .btn:hover { background-color: #4a90c2 !important; }
-
-      /* Link styling */
-      a { color: #ffffff !important; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-
-      /* --- Sidebar container --- */
+      /* ===== SIDEBAR ===== */
       #sidebar {
         height: 100vh;
         width: 290px; min-width: 290px;
-        background: linear-gradient(180deg, #2b4c66 0%, #253f57 100%);
+        background: var(--wb-navy) !important;
         padding: 18px 16px;
-        color: #e8f0fb;
+        color: #ffffff;
         overflow-y: auto;
-        border-right: 1px solid rgba(255,255,255,0.08);
-        box-shadow: inset 0 0 12px rgba(0,0,0,.25);
+        border-right: 1px solid rgba(0,0,0,0.08);
+        box-shadow: none;
         position: sticky; top: 0;
       }
 
-      /* subtle custom scrollbar */
+      /* scrollbar */
       #sidebar::-webkit-scrollbar { width: 8px; }
       #sidebar::-webkit-scrollbar-thumb {
         background: rgba(255,255,255,.25);
@@ -200,35 +197,27 @@ ui <- bootstrapPage(
       }
       #sidebar::-webkit-scrollbar-track { background: transparent; }
 
-      /* brand/title area (optional) */
-      .sidebar-brand {
-        display: flex; align-items: center; gap: 10px;
-        margin: 2px 6px 14px;
-        font-weight: 700; letter-spacing: .3px;
-        color: #fff;
-      }
-      .sidebar-brand .brand-dot {
-        width: 10px; height: 10px; border-radius: 50%;
-        background: var(--accent); display: inline-block;
-      }
+      /* Sidebar brand */
+      .sidebar-brand { color: #fff; }
+      .sidebar-brand .brand-dot { background: var(--soft); }
 
       /* section headings (click to expand) */
       .nav-section {
         display: flex; align-items: center; justify-content: space-between;
         font-size: 16px; font-weight: 700;
         padding: 10px 10px; margin: 12px 6px 4px;
-        color: #dbe7ff; border-radius: 8px;
+        color: #ffffff; border-radius: 8px;
         transition: background .2s, color .2s;
         cursor: pointer;
       }
-      .nav-section:hover { background: rgba(255,255,255,.06); }
+      .nav-section:hover { background: rgba(255,255,255,.10); }
       .nav-section::after {
         content: '▾'; font-size: 14px; opacity: .8; margin-left: 8px;
       }
       .section-open::after { transform: rotate(180deg); }
 
       /* links */
-      .nav-item a, .nav-sub-item a { color: inherit; text-decoration: none; }
+      .nav-item a, .nav-sub-item a { color: inherit !important; text-decoration: none; }
 
       /* top-level items */
       .nav-item {
@@ -237,17 +226,17 @@ ui <- bootstrapPage(
         font-size: 16px; font-weight: 600; color: #eef5ff;
         border-radius: 10px; transition: transform .08s, background .2s;
       }
-      .nav-item:hover { background: rgba(255,255,255,.08); transform: translateX(2px); }
+      .nav-item:hover { background: rgba(255,255,255,.10); transform: translateX(2px); }
 
       /* active item with accent bar */
       .nav-item.active {
-        background: rgba(111,168,220,.25);
-        box-shadow: inset 0 0 0 1px rgba(111,168,220,.5);
+        background: rgba(230,240,247,.18);
+        box-shadow: inset 0 0 0 1px rgba(230,240,247,.35);
         position: relative;
       }
       .nav-item.active::before {
         content: ''; position: absolute; left: -6px; top: 10px; bottom: 10px;
-        width: 4px; border-radius: 4px; background: var(--accent);
+        width: 4px; border-radius: 4px; background: var(--soft);
       }
 
       /* sub-items (include all expandable sections) */
@@ -257,7 +246,7 @@ ui <- bootstrapPage(
       #public_sector_wages_section,
       #equity_public_sector_section {
         padding: 4px 6px 6px 12px; display: none;
-        border-left: 1px dashed rgba(255,255,255,.15);
+        border-left: 1px dashed rgba(255,255,255,.25);
         margin-left: 10px;
       }
 
@@ -267,163 +256,101 @@ ui <- bootstrapPage(
         font-size: 15px; color: #eaf3ff; border-radius: 8px;
         transition: background .2s, transform .08s;
       }
-      .nav-sub-item:hover { background: rgba(255,255,255,.06); transform: translateX(2px); }
-      .nav-sub-item.active { background: rgba(111,168,220,.22); }
+      .nav-sub-item:hover { background: rgba(255,255,255,.10); transform: translateX(2px); }
+      .nav-sub-item.active { background: rgba(230,240,247,.18); }
+
+      /* ===== CARDS / PANELS ===== */
+      .well, .card, .panel, .box, .custom-info-box, .info-box {
+        background-color: var(--card) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      }
 
       /* =========================
          Accordion (Bootstrap 5)
          ========================= */
       .accordion-item{
-        background-color:#2b4c66;
-        border:1px solid #6fa8dc;
-        border-radius:12px !important;
-        margin-bottom:14px;
-        overflow:hidden;
-        color:#fff;
+        background-color: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        margin-bottom: 14px;
+        overflow: hidden;
+        color: var(--text) !important;
       }
       .accordion-button{
-        background-color:#2b4c66;
-        color:#fff;
+        background-color: var(--card) !important;
+        color: var(--wb-navy) !important;
         box-shadow:none !important;
         font-size:18px;
         padding:16px 20px;
       }
       .accordion-button:not(.collapsed){
-        background-color:#356088;
-        color:#fff;
-      }
-      .accordion-button:focus{
-        box-shadow:none !important;
-      }
-      .accordion-body{
-        background-color:#356088;
-        color:#fff;
-        padding:18px 22px;
-        border-top:1px solid #6fa8dc;
-      }
-      .accordion-button::after{ filter: invert(1); }  /* white chevron */
-
-      /* Keep all three logos on one line and evenly spaced */
-      .logos-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:nowrap; }
-      .logo-wrap { flex:1 1 0; display:flex; justify-content:center; }
-      .logos-row img { max-width:100%; height:auto; object-fit:contain; display:inline-block; vertical-align:middle; }
-      img.bl-logo, img.wb-logo { max-height:64px; }
-      @media (min-width: 992px) { img.wb-logo.wb-logo--right { max-height:80px; } }
-      .wb-logo.wb-logo--right.padfix { transform: scale(1.12); transform-origin: center; }
-img.wb-logo.wb-logo--dec { max-height: 60px !important; }
-      /* Info boxes (optional) */
-      .custom-infobox .info-box-icon{
-        flex: 0 0 var(--tile);
-        height: var(--tile);
-        border-radius: 12px;
-        background-color: #00BFE5 !important;
-        color: #fff !important;
-        display:flex; align-items:center; justify-content:center;
-        float: none !important;
-      }
-      .custom-infobox .info-box-content{ margin:0 !important; padding:0; }
-      .custom-infobox .info-box-text{ font-size:15px !important; line-height:1.2; letter-spacing:.2px; margin:0; }
-      .custom-infobox .info-box-number{ font-size:22px !important; font-weight:600; line-height:1.1; margin-top:2px; }
-
-      @media (max-width: 992px){
-        .custom-infobox .info-box{ --tile:64px; }
-        .custom-infobox .info-box-icon i{ font-size:22px !important; }
-        .custom-infobox .info-box-text{ font-size:14px !important; }
-        .custom-infobox .info-box-number{ font-size:20px !important; }
-      }
-      @media (max-width: 768px){
-        .custom-infobox .info-box{ --tile:56px; --gap:10px; padding:6px 4px; }
-        .custom-infobox .info-box-icon i{ font-size:20px !important; }
-        .custom-infobox .info-box-text{ font-size:13px !important; }
-        .custom-infobox .info-box-number{ font-size:18px !important; }
-      }
-
-      #graph_choice .form-check { margin-bottom: .25rem; }
-    ")),
-    
-    # ------- Accordion styles to match your palette -------
-    tags$style(HTML("
-      .accordion-item{
-        background-color:#2b4c66;
-        border:1px solid #6fa8dc;
-        border-radius:12px !important;
-        margin-bottom:14px;
-        overflow:hidden;
-        color:#fff;
-      }
-      .accordion-button{
-        background-color:#2b4c66;
-        color:#fff;
-        box-shadow:none !important;
-        font-size:18px;
-        padding:16px 20px;
-      }
-      .accordion-button:not(.collapsed){
-        background-color:#356088;
-        color:#fff;
+        background-color: var(--soft) !important;
+        color: var(--wb-navy) !important;
       }
       .accordion-button:focus{ box-shadow:none !important; }
       .accordion-body{
-        background-color:#356088;
-        color:#fff;
+        background-color: var(--card) !important;
+        color: var(--text) !important;
         padding:18px 22px;
-        border-top:1px solid #6fa8dc;
-      }
-      .accordion-button::after{ filter: invert(1); }
-
-      /* Logo size (base) */
-      .wb-logo{
-        max-height:60px;
-        width:auto;
-        height:auto;
-        display:inline-block;
+        border-top:1px solid var(--border);
       }
 
-      /* Download buttons */
-      .dl-btn {
-        font-size: 18px;
-        padding: 14px 22px;
-        border-radius: 12px;
-        background-color: #76A9D6;
-        border-color: #76A9D6;
-        color: #fff;
+      /* ===== LOGOS: same visual size ===== */
+.logos-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  flex-wrap:nowrap;
+}
+
+.logo-wrap{
+  flex: 1 1 0;
+  height: 90px;                 /* same slot height */
+  display:flex;
+  align-items:center;            /* vertical center */
+  justify-content:center;         /* horizontal center */
+}
+
+/* force same logo height */
+.logos-row img{
+  height: 70px !important;        /* change to 75/80 if you want bigger */
+  width: auto !important;
+  max-width: 100%;
+  object-fit: contain;
+  display:block;
+}
+
+      /* Buttons */
+      .btn, .btn-primary, .dl-btn {
+        background-color: var(--wb-blue) !important;
+        border: none !important;
+        color: #fff !important;
+        border-radius: 10px;
       }
-      .dl-btn:hover {
-        background-color: #669bd0;
-        border-color: #669bd0;
-        color:#fff;
+      .btn:hover, .btn-primary:hover, .dl-btn:hover {
+        background-color: var(--wb-navy) !important;
+        color:#fff !important;
       }
 
-      /* Only shrink the DEC logo */
-      img.wb-logo.wb-logo--dec { max-height: 50px !important; }
-
+      /* Icon color inside sidebar */
       li i.fa, li i.fas, li i.fa-solid { margin: 0 6px; color: #fff; }
 
-      /* Keep the group left-aligned */
-      #graph_choice { text-align: left; }
-
-      /* Title aligned with the radio dots (fixed small typo: removed stray space in -1.9rem) */
-      #graph_choice .rb-title{
-        display: block;
-        font-weight: 700;
-        font-size: 1.1rem;
-        line-height: 1.2;
-        margin: 0 0 .25rem 0;
-        padding-left: 0;
-        margin-left: -1.9rem;
-      }
-
-      @media (max-width: 768px){
-        #graph_choice .rb-title{
-          font-size: 1.0rem;
-          padding-left: 1.9rem;
-        }
+      /* Plot container */
+      .plot-container {
+        background-color: var(--card) !important;
+        border-radius: 10px;
+        padding: 10px;
+        border: 1px solid var(--border);
       }
 
       #graph_choice .form-check { margin-bottom: .3rem; }
     ")),
     
-    # ------- JS to toggle sidebar submenus (yours) -------
+    # ------- JS to toggle sidebar submenus + active highlight -------
     tags$script(HTML("
       function toggleSection(id){
         var section = document.getElementById(id);
@@ -431,7 +358,6 @@ img.wb-logo.wb-logo--dec { max-height: 60px !important; }
         var header = document.querySelector('[onclick=\"toggleSection(\\''+id+'\\')\"]');
         if(header){ header.classList.toggle('section-open'); }
       }
-      // highlight clicked items
       document.addEventListener('click', function(e){
         if(e.target.closest('.nav-item')){
           document.querySelectorAll('#sidebar .nav-item').forEach(n=>n.classList.remove('active'));
@@ -446,56 +372,64 @@ img.wb-logo.wb-logo--dec { max-height: 60px !important; }
   ),
   
   # ------- Layout -------
-  div(class = "d-flex",
-      # --- Sidebar ---
+  div(
+    class = "d-flex",
+    
+    # --- Sidebar ---
+    div(
+      id = "sidebar",
+      div(class = "nav-item", actionLink("nav_dashboard", "Overview")),
+      div(class = "nav-item", actionLink("nav_instructions", "Instructions")),
+      div(class = "nav-item", actionLink("nav_metadata", "Metadata")),
+      
+      div(class = "nav-section", onclick = "toggleSection('macro_section')",
+          "Macro Fundamentals of the Public Sector"),
       div(
-        id = "sidebar",
-        div(class = "nav-item", actionLink("nav_dashboard", "Overview")),
-        div(class = "nav-item", actionLink("nav_instructions", "Instructions")),
-        div(class = "nav-item", actionLink("nav_metadata", "Metadata")),
-        
-        div(class = "nav-section", onclick = "toggleSection('macro_section')",
-            "Macro Fundamentals of the Public Sector"),
-        div(id = "macro_section",
-            div(class = "nav-sub-item", actionLink("nav_wagebill", "Wage Bill Graphs")),
-            div(class = "nav-sub-item", actionLink("nav_wagebill_gdp", "Wage Bill & GDP Graphs"))
-        ),
-        
-        div(class = "nav-section", onclick = "toggleSection('public_sector_section')",
-            "Size and Characteristics of the Public Sector Employment"),
-        div(id = "public_sector_section",
-            div(class = "nav-sub-item", actionLink("nav_public_graphs", "Public Employment")),
-            div(class = "nav-sub-item", actionLink("nav_public_workforce", "Employment Distribution")),
-            div(class = "nav-sub-item", actionLink("nav_education", "Tertiary Education"))
-        ),
-        
-        div(class = "nav-section", onclick = "toggleSection('public_sector_wages_section')",
-            "Competitiveness of Public Sector Wages"),
-        div(id = "public_sector_wages_section",
-            div(class = "nav-sub-item", actionLink("nav_wagepremium", "Wage Premium")),
-            div(class = "nav-sub-item", actionLink("nav_public_educ", "Wage Premium by Education")),
-            div(class = "nav-sub-item", actionLink("nav_pay_compression", "Pay Compression"))
-        ),
-        
-        div(class = "nav-section", onclick = "toggleSection('equity_public_sector_section')",
-            "Equity in Public Sector Employment"),
-        div(id = "equity_public_sector_section",
-            div(class = "nav-sub-item", actionLink("nav_gender_workforce", "Female Employment")),
-            div(class = "nav-sub-item", actionLink("nav_female_leadership", "Female Leadership")),
-            div(class = "nav-sub-item", actionLink("nav_wagepremium_gender", "Wage Premium by Gender")),
-            div(class = "nav-sub-item", actionLink("nav_gender_wage_premium", "Gender Wage Premium by Industry"))
-        ),
-        
-        div(class = "nav-item", actionLink("nav_download_all", "📥 Download All Graphs"))
+        id = "macro_section",
+        div(class = "nav-sub-item", actionLink("nav_wagebill", "Wage Bill Graphs")),
+        div(class = "nav-sub-item", actionLink("nav_wagebill_gdp", "Wage Bill & GDP Graphs"))
       ),
       
-      # --- Main content with collapsible tabs (accordion) ---
-      div(class = "flex-grow-1 p-4",
-          h2("Worldwide Bureaucracy Indicators"),
-          uiOutput("main_content")
-      )
+      div(class = "nav-section", onclick = "toggleSection('public_sector_section')",
+          "Size and Characteristics of the Public Sector Employment"),
+      div(
+        id = "public_sector_section",
+        div(class = "nav-sub-item", actionLink("nav_public_graphs", "Public Employment")),
+        div(class = "nav-sub-item", actionLink("nav_public_workforce", "Employment Distribution")),
+        div(class = "nav-sub-item", actionLink("nav_education", "Tertiary Education"))
+      ),
+      
+      div(class = "nav-section", onclick = "toggleSection('public_sector_wages_section')",
+          "Competitiveness of Public Sector Wages"),
+      div(
+        id = "public_sector_wages_section",
+        div(class = "nav-sub-item", actionLink("nav_wagepremium", "Wage Premium")),
+        div(class = "nav-sub-item", actionLink("nav_public_educ", "Wage Premium by Education")),
+        div(class = "nav-sub-item", actionLink("nav_pay_compression", "Pay Compression"))
+      ),
+      
+      div(class = "nav-section", onclick = "toggleSection('equity_public_sector_section')",
+          "Equity in Public Sector Employment"),
+      div(
+        id = "equity_public_sector_section",
+        div(class = "nav-sub-item", actionLink("nav_gender_workforce", "Female Employment")),
+        div(class = "nav-sub-item", actionLink("nav_female_leadership", "Female Leadership")),
+        div(class = "nav-sub-item", actionLink("nav_wagepremium_gender", "Wage Premium by Gender")),
+        div(class = "nav-sub-item", actionLink("nav_gender_wage_premium", "Gender Wage Premium by Industry"))
+      ),
+      
+      div(class = "nav-item", actionLink("nav_download_all", "📥 Download All Graphs"))
+    ),
+    
+    # --- Main content ---
+    div(
+      class = "flex-grow-1 p-4",
+      h2("Worldwide Bureaucracy Indicators"),
+      uiOutput("main_content")
+    )
   )
 )
+
 
 # SERVER
 
@@ -561,7 +495,7 @@ server <- function(input, output, session) {
             div(
               class = "logo-wrap",
               tags$img(
-                src = "logos/wbg_institutions_logo.png",
+                src = "logos/WBG-Institutions-Horizontal-CMYK-01.jpg",
                 class = "wb-logo wb-logo--right",
                 alt = "WBG Institutions"
               )
@@ -573,7 +507,7 @@ server <- function(input, output, session) {
             div(
               class = "logo-wrap",
               tags$img(
-                src = "logos/bl_logo.png",
+                src = "logos/57d518e1-4b7b-4ffb-9715-8dcfaad6e0f9.png",
                 class = "bl-logo",
                 alt = "Bureaucracy Lab"
               )
@@ -585,7 +519,7 @@ server <- function(input, output, session) {
             div(
               class = "logo-wrap",
               tags$img(
-                src = "logos/wbg_dec_logo.png",
+                src = "logos/WB-DEC-Impact-horizontal-RGB-high.png",
                 class = "wb-logo wb-logo--dec",
                 alt = "WBG DEC"
               )
