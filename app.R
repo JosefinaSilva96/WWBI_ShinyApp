@@ -3183,17 +3183,17 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       
-      # 1) asegurar selección
+     
       req(input$countries_wage_premium)
       selected_countries <- input$countries_wage_premium
       
-      # 2) crear doc
+     
       doc <- officer::read_docx()
       
-      # 3) agregar sección
+  
       doc <- generate_wage_premium_report_section(doc, selected_countries)
       
-      # 4) escribir a disco (ESTO es lo que dispara la descarga)
+     
       print(doc, target = file)
     }
   )
