@@ -267,6 +267,7 @@ ui <- bootstrapPage(
 # SERVER
 server <- function(input, output, session) {
   
+
   active_tab <- reactiveVal("dashboard")
   
   safe_acc_open  <- function(id, panels) {
