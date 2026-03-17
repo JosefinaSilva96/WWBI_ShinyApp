@@ -33,103 +33,67 @@ library(tibble)
 
 ### Load data sets ----
 
-# Load the data sets
+data_path <- file.path(getwd())
 
-data_path <- file.path(getwd()) 
-
-# Automatically detect the correct root folder (without "Code/")
 if (basename(getwd()) == "Code") {
-  data_path <- dirname(getwd())  # Move one level up if inside "Code/"
+  data_path <- dirname(getwd())
 } else {
-  data_path <- getwd()  # Use current directory if already correct
+  data_path <- getwd()
 }
 
-# Debugging: Print the detected data path to check correctness
 print(paste("Using data path:", data_path))
 
+data_wwbi         <- read_dta(file.path(data_path, "Data/data_wwbi.dta"))
+data_gdp          <- read_dta(file.path(data_path, "Data/data_gdp.dta"))
+gdp_2015          <- read_dta(file.path(data_path, "Data/gdp_2015.dta"))
+world_spdf        <- st_read(file.path(data_path, "Data/world_spatial.gpkg"))
+selected_data_long <- read_dta(file.path(data_path, "Data/selected_data_long.dta"))
+data_wwbi_long    <- read_dta(file.path(data_path, "Data/data_wwbi_long.dta"))
 
+# ── KEY CHANGE: split into time-series vs latest-obs versions ──────────────────
+data_wwbi_long_ts     <- data_wwbi_long %>%
+  filter(is_latest == FALSE | is.na(is_latest))   # year-by-year rows (for trend charts)
 
-data_wwbi     <- read_dta(file.path(data_path, "Data/data_wwbi.dta"))
+data_wwbi_long_latest <- data_wwbi_long %>%
+  filter(is_latest == TRUE)                        # latest-obs rows (for cross-country comparisons)
+# ──────────────────────────────────────────────────────────────────────────────
 
+wage_bill_publicexp   <- read_dta(file.path(data_path, "Data/wage_bill_publicexp.dta")) %>%
+  filter(is_latest == FALSE | is.na(is_latest))   # time series only
 
-data_gdp     <- read_dta(file.path(data_path, "Data/data_gdp.dta"))
-
-gdp_2015     <- read_dta(file.path(data_path, "Data/gdp_2015.dta"))
-
-
-world_spdf <- st_read(file.path(data_path, "Data/world_spatial.gpkg"))
-
-
-selected_data_long     <- read_dta(file.path(data_path, "Data/selected_data_long.dta"))
-
-
-data_wwbi_long     <- read_dta(file.path(data_path, "Data/data_wwbi_long.dta"))
-
-
-wage_bill_publicexp     <- read_dta(file.path(data_path, "Data/wage_bill_publicexp.dta"))
-
-
-wage_bill_gdp     <- read_dta(file.path(data_path, "Data/wage_bill_gdp.dta"))
-
-public_sector_emp_temp <- readRDS(file.path(data_path, "Data", "public_sector_emp_temp.rds"))
+wage_bill_gdp         <- read_dta(file.path(data_path, "Data/wage_bill_gdp.dta")) %>%
+  filter(is_latest == FALSE | is.na(is_latest))   # time series only
 
 public_sector_emp_temp <- readRDS(file.path(data_path, "Data", "public_sector_emp_temp.rds")) %>%
-  mutate(
-    across(where(~inherits(.x, "haven_labelled")), as_factor)  # Convert haven-labelled to factors
-  )
+  mutate(across(where(~inherits(.x, "haven_labelled")), as_factor))
 
 public_sector_emp <- readRDS(file.path(data_path, "Data", "public_sector_emp.rds"))
 
 public_sector_emp_temp_last <- readRDS(file.path(data_path, "Data", "public_sector_emp_temp_last.rds")) %>%
-  mutate(
-    across(where(~inherits(.x, "haven_labelled")), as_factor)  # Convert haven-labelled to factors
-  )
+  mutate(across(where(~inherits(.x, "haven_labelled")), as_factor))
 
-public_sector_workforce_clean     <- read_dta(file.path(data_path, "Data/public_sector_workforce_clean.dta"))
-
-
-public_sector_workforce     <- read_dta(file.path(data_path, "Data/public_sector_workforce.dta"))
-
-public_sector_workforce_first_last     <- read_dta(file.path(data_path, "Data/public_sector_workforce_first_last.dta"))
-
-gender_workforce     <- read_dta(file.path(data_path, "Data/gender_workforce.dta"))
-
-
+public_sector_workforce_clean <- read_dta(file.path(data_path, "Data/public_sector_workforce_clean.dta"))
+public_sector_workforce       <- read_dta(file.path(data_path, "Data/public_sector_workforce.dta"))
+public_sector_workforce_first_last <- read_dta(file.path(data_path, "Data/public_sector_workforce_first_last.dta"))
+gender_workforce      <- read_dta(file.path(data_path, "Data/gender_workforce.dta"))
 data_indicator_wb     <- read_dta(file.path(data_path, "Data/data_indicator_wb.dta"))
-
-merged_data     <- read_dta(file.path(data_path, "Data/merged_data.dta"))
-
-tertiary_education     <- read_dta(file.path(data_path, "Data/tertiary_education.dta"))
-
-public_wage_premium     <- read_dta(file.path(data_path, "Data/public_wage_premium.dta"))
-
-public_wage_premium_educ     <- read_dta(file.path(data_path, "Data/public_wage_premium_educ.dta"))
-
-
-gender_wage_premium <- readRDS(file.path(data_path, "Data", "gender_wage_premium.rds"))
-
-
+merged_data           <- read_dta(file.path(data_path, "Data/merged_data.dta"))
+tertiary_education    <- read_dta(file.path(data_path, "Data/tertiary_education.dta"))
+public_wage_premium   <- read_dta(file.path(data_path, "Data/public_wage_premium.dta"))
+public_wage_premium_educ <- read_dta(file.path(data_path, "Data/public_wage_premium_educ.dta"))
+gender_wage_premium   <- readRDS(file.path(data_path, "Data", "gender_wage_premium.rds"))
 gender_wage_premium_last <- readRDS(file.path(data_path, "Data", "gender_wage_premium_last.rds"))
-
-
-gender_leadership <- readRDS(file.path(data_path, "Data", "gender_leadership.rds"))
-
-
+gender_leadership     <- readRDS(file.path(data_path, "Data", "gender_leadership.rds"))
 gender_wage_premiumpublic <- readRDS(file.path(data_path, "Data", "gender_wage_premiumpublic.rds"))
-
-
-pay_compression <- readRDS(file.path(data_path, "Data", "pay_compression.rds"))
-
-pay_compression_wide <- readRDS(file.path(data_path, "Data", "pay_compression_wide.rds"))
+pay_compression       <- readRDS(file.path(data_path, "Data", "pay_compression.rds"))
+pay_compression_wide  <- readRDS(file.path(data_path, "Data", "pay_compression_wide.rds"))
 
 # ---------------------------
 # UI
 # ---------------------------
 
-
 library(shiny)
 library(bslib)
-
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
 sanitize_vec <- function(x) {
@@ -140,10 +104,7 @@ sanitize_vec <- function(x) {
 
 ui <- bootstrapPage(
   theme = bs_theme(version = 5, bootswatch = "sandstone"),
-  
-  # Put global CSS/JS in <head>
   tags$head(
-    # ------- Styles (WB Clean palette) -------
     tags$style(HTML("
       :root {
         --wb-navy: #002244;
@@ -152,74 +113,41 @@ ui <- bootstrapPage(
         --card: #FFFFFF;
         --soft: #E6F0F7;
         --text: #1F2A33;
-        --accent: #003366;   /* buttons/links */
+        --accent: #003366;
         --border: #E0E6ED;
       }
-
-      /* ===== GENERAL BACKGROUND & TEXT ===== */
       html, body { height: 100%; }
       body, .container-fluid, .main-container, .content-wrapper, .flex-grow-1 {
         background-color: var(--bg) !important;
         color: var(--text) !important;
       }
-
-      /* Typography */
-      h1, h2, h3, h4, h5, h6 {
-        color: var(--wb-navy) !important;
-        font-weight: 600;
-      }
-      p, li, span, label {
-        color: var(--text) !important;
-      }
-
-      /* Links */
+      h1, h2, h3, h4, h5, h6 { color: var(--wb-navy) !important; font-weight: 600; }
+      p, li, span, label { color: var(--text) !important; }
       a { color: var(--wb-blue) !important; text-decoration: none; }
       a:hover { color: #0072CE !important; text-decoration: underline; }
-
-      /* ===== SIDEBAR ===== */
       #sidebar {
-        height: 100vh;
-        width: 290px; min-width: 290px;
+        height: 100vh; width: 290px; min-width: 290px;
         background: var(--wb-navy) !important;
-        padding: 18px 16px;
-        color: #ffffff;
-        overflow-y: auto;
-        border-right: 1px solid rgba(0,0,0,0.08);
-        box-shadow: none;
-        position: sticky; top: 0;
+        padding: 18px 16px; color: #ffffff;
+        overflow-y: auto; border-right: 1px solid rgba(0,0,0,0.08);
+        box-shadow: none; position: sticky; top: 0;
       }
-
-      /* scrollbar */
       #sidebar::-webkit-scrollbar { width: 8px; }
-      #sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,.25);
-        border-radius: 8px;
-      }
+      #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 8px; }
       #sidebar::-webkit-scrollbar-track { background: transparent; }
-
-      /* Sidebar brand */
       .sidebar-brand { color: #fff; }
       .sidebar-brand .brand-dot { background: var(--soft); }
-
-      /* section headings (click to expand) */
       .nav-section {
         display: flex; align-items: center; justify-content: space-between;
         font-size: 16px; font-weight: 700;
         padding: 10px 10px; margin: 12px 6px 4px;
         color: #ffffff; border-radius: 8px;
-        transition: background .2s, color .2s;
-        cursor: pointer;
+        transition: background .2s, color .2s; cursor: pointer;
       }
       .nav-section:hover { background: rgba(255,255,255,.10); }
-      .nav-section::after {
-        content: '▾'; font-size: 14px; opacity: .8; margin-left: 8px;
-      }
+      .nav-section::after { content: '▾'; font-size: 14px; opacity: .8; margin-left: 8px; }
       .section-open::after { transform: rotate(180deg); }
-
-      /* links */
       .nav-item a, .nav-sub-item a { color: inherit !important; text-decoration: none; }
-
-      /* top-level items */
       .nav-item {
         display: flex; align-items: center; gap: 10px;
         margin: 6px 6px; padding: 10px 12px;
@@ -227,29 +155,19 @@ ui <- bootstrapPage(
         border-radius: 10px; transition: transform .08s, background .2s;
       }
       .nav-item:hover { background: rgba(255,255,255,.10); transform: translateX(2px); }
-
-      /* active item with accent bar */
       .nav-item.active {
         background: rgba(230,240,247,.18);
-        box-shadow: inset 0 0 0 1px rgba(230,240,247,.35);
-        position: relative;
+        box-shadow: inset 0 0 0 1px rgba(230,240,247,.35); position: relative;
       }
       .nav-item.active::before {
         content: ''; position: absolute; left: -6px; top: 10px; bottom: 10px;
         width: 4px; border-radius: 4px; background: var(--soft);
       }
-
-      /* sub-items (include all expandable sections) */
-      #macro_section,
-      #public_sector_section,
-      #public_sector_workforce_section,
-      #public_sector_wages_section,
-      #equity_public_sector_section {
+      #macro_section, #public_sector_section, #public_sector_workforce_section,
+      #public_sector_wages_section, #equity_public_sector_section {
         padding: 4px 6px 6px 12px; display: none;
-        border-left: 1px dashed rgba(255,255,255,.25);
-        margin-left: 10px;
+        border-left: 1px dashed rgba(255,255,255,.25); margin-left: 10px;
       }
-
       .nav-sub-item {
         display: flex; align-items: center; gap: 8px;
         margin: 4px 0; padding: 8px 10px;
@@ -258,103 +176,38 @@ ui <- bootstrapPage(
       }
       .nav-sub-item:hover { background: rgba(255,255,255,.10); transform: translateX(2px); }
       .nav-sub-item.active { background: rgba(230,240,247,.18); }
-
-      /* ===== CARDS / PANELS ===== */
       .well, .card, .panel, .box, .custom-info-box, .info-box {
-        background-color: var(--card) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 10px;
+        background-color: var(--card) !important; color: var(--text) !important;
+        border: 1px solid var(--border) !important; border-radius: 10px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       }
-
-      /* =========================
-         Accordion (Bootstrap 5)
-         ========================= */
-      .accordion-item{
-        background-color: var(--card) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 12px !important;
-        margin-bottom: 14px;
-        overflow: hidden;
-        color: var(--text) !important;
+      .accordion-item {
+        background-color: var(--card) !important; border: 1px solid var(--border) !important;
+        border-radius: 12px !important; margin-bottom: 14px; overflow: hidden; color: var(--text) !important;
       }
-      .accordion-button{
-        background-color: var(--card) !important;
-        color: var(--wb-navy) !important;
-        box-shadow:none !important;
-        font-size:18px;
-        padding:16px 20px;
+      .accordion-button {
+        background-color: var(--card) !important; color: var(--wb-navy) !important;
+        box-shadow: none !important; font-size: 18px; padding: 16px 20px;
       }
-      .accordion-button:not(.collapsed){
-        background-color: var(--soft) !important;
-        color: var(--wb-navy) !important;
+      .accordion-button:not(.collapsed) { background-color: var(--soft) !important; color: var(--wb-navy) !important; }
+      .accordion-button:focus { box-shadow: none !important; }
+      .accordion-body {
+        background-color: var(--card) !important; color: var(--text) !important;
+        padding: 18px 22px; border-top: 1px solid var(--border);
       }
-      .accordion-button:focus{ box-shadow:none !important; }
-      .accordion-body{
-        background-color: var(--card) !important;
-        color: var(--text) !important;
-        padding:18px 22px;
-        border-top:1px solid var(--border);
-      }
-
-      /* ===== LOGOS: same visual size ===== */
-.logos-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:24px;
-  flex-wrap:nowrap;
-}
-
-.logo-wrap{
-  flex: 1 1 0;
-  height: 90px;                 /* same slot height */
-  display:flex;
-  align-items:center;            /* vertical center */
-  justify-content:center;         /* horizontal center */
-}
-
-/* force same logo height */
-.logos-row img{
-  height: 70px !important;        /* change to 75/80 if you want bigger */
-  width: auto !important;
-  max-width: 100%;
-  object-fit: contain;
-  display:block;
-}
-/* make the middle logo bigger */
-.logos-row img.bl-logo{
-  height: 130px !important;   /* prueba 90-110 */
-}
-
-      /* Buttons */
+      .logos-row { display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:nowrap; }
+      .logo-wrap { flex: 1 1 0; height: 90px; display:flex; align-items:center; justify-content:center; }
+      .logos-row img { height: 70px !important; width: auto !important; max-width: 100%; object-fit: contain; display:block; }
+      .logos-row img.bl-logo { height: 130px !important; }
       .btn, .btn-primary, .dl-btn {
-        background-color: var(--wb-blue) !important;
-        border: none !important;
-        color: #fff !important;
-        border-radius: 10px;
+        background-color: var(--wb-blue) !important; border: none !important;
+        color: #fff !important; border-radius: 10px;
       }
-      .btn:hover, .btn-primary:hover, .dl-btn:hover {
-        background-color: var(--wb-navy) !important;
-        color:#fff !important;
-      }
-
-      /* Icon color inside sidebar */
+      .btn:hover, .btn-primary:hover, .dl-btn:hover { background-color: var(--wb-navy) !important; color:#fff !important; }
       li i.fa, li i.fas, li i.fa-solid { margin: 0 6px; color: #fff; }
-
-      /* Plot container */
-      .plot-container {
-        background-color: var(--card) !important;
-        border-radius: 10px;
-        padding: 10px;
-        border: 1px solid var(--border);
-      }
-
+      .plot-container { background-color: var(--card) !important; border-radius: 10px; padding: 10px; border: 1px solid var(--border); }
       #graph_choice .form-check { margin-bottom: .3rem; }
     ")),
-    
-    # ------- JS to toggle sidebar submenus + active highlight -------
     tags$script(HTML("
       function toggleSection(id){
         var section = document.getElementById(id);
@@ -374,58 +227,35 @@ ui <- bootstrapPage(
       }, true);
     "))
   ),
-  
-  # ------- Layout -------
   div(
     class = "d-flex",
-    
-    # --- Sidebar ---
     div(
       id = "sidebar",
-      div(class = "nav-item", actionLink("nav_dashboard", "Overview")),
-      div(class = "nav-item", actionLink("nav_instructions", "Instructions")),
-      div(class = "nav-item", actionLink("nav_metadata", "Metadata")),
-      
-      div(class = "nav-section", onclick = "toggleSection('macro_section')",
-          "Macro Fundamentals of the Public Sector"),
-      div(
-        id = "macro_section",
-        div(class = "nav-sub-item", actionLink("nav_wagebill", "Wage Bill Graphs")),
-        div(class = "nav-sub-item", actionLink("nav_wagebill_gdp", "Wage Bill & GDP Graphs"))
-      ),
-      
-      div(class = "nav-section", onclick = "toggleSection('public_sector_section')",
-          "Size and Characteristics of the Public Sector Employment"),
-      div(
-        id = "public_sector_section",
-        div(class = "nav-sub-item", actionLink("nav_public_graphs", "Public Employment")),
-        div(class = "nav-sub-item", actionLink("nav_public_workforce", "Employment Distribution")),
-        div(class = "nav-sub-item", actionLink("nav_education", "Tertiary Education"))
-      ),
-      
-      div(class = "nav-section", onclick = "toggleSection('public_sector_wages_section')",
-          "Competitiveness of Public Sector Wages"),
-      div(
-        id = "public_sector_wages_section",
-        div(class = "nav-sub-item", actionLink("nav_wagepremium", "Wage Premium")),
-        div(class = "nav-sub-item", actionLink("nav_public_educ", "Wage Premium by Education")),
-        div(class = "nav-sub-item", actionLink("nav_pay_compression", "Pay Compression"))
-      ),
-      
-      div(class = "nav-section", onclick = "toggleSection('equity_public_sector_section')",
-          "Equity in Public Sector Employment"),
-      div(
-        id = "equity_public_sector_section",
-        div(class = "nav-sub-item", actionLink("nav_gender_workforce", "Female Employment")),
-        div(class = "nav-sub-item", actionLink("nav_female_leadership", "Female Leadership")),
-        div(class = "nav-sub-item", actionLink("nav_wagepremium_gender", "Wage Premium by Gender")),
-        div(class = "nav-sub-item", actionLink("nav_gender_wage_premium", "Gender Wage Premium by Industry"))
-      ),
-      
+      div(class = "nav-item", actionLink("nav_dashboard",   "Overview")),
+      div(class = "nav-item", actionLink("nav_instructions","Instructions")),
+      div(class = "nav-item", actionLink("nav_metadata",    "Metadata")),
+      div(class = "nav-section", onclick = "toggleSection('macro_section')", "Macro Fundamentals of the Public Sector"),
+      div(id = "macro_section",
+          div(class = "nav-sub-item", actionLink("nav_wagebill",     "Wage Bill Graphs")),
+          div(class = "nav-sub-item", actionLink("nav_wagebill_gdp", "Wage Bill & GDP Graphs"))),
+      div(class = "nav-section", onclick = "toggleSection('public_sector_section')", "Size and Characteristics of the Public Sector Employment"),
+      div(id = "public_sector_section",
+          div(class = "nav-sub-item", actionLink("nav_public_graphs",    "Public Employment")),
+          div(class = "nav-sub-item", actionLink("nav_public_workforce", "Employment Distribution")),
+          div(class = "nav-sub-item", actionLink("nav_education",        "Tertiary Education"))),
+      div(class = "nav-section", onclick = "toggleSection('public_sector_wages_section')", "Competitiveness of Public Sector Wages"),
+      div(id = "public_sector_wages_section",
+          div(class = "nav-sub-item", actionLink("nav_wagepremium",   "Wage Premium")),
+          div(class = "nav-sub-item", actionLink("nav_public_educ",   "Wage Premium by Education")),
+          div(class = "nav-sub-item", actionLink("nav_pay_compression","Pay Compression"))),
+      div(class = "nav-section", onclick = "toggleSection('equity_public_sector_section')", "Equity in Public Sector Employment"),
+      div(id = "equity_public_sector_section",
+          div(class = "nav-sub-item", actionLink("nav_gender_workforce",   "Female Employment")),
+          div(class = "nav-sub-item", actionLink("nav_female_leadership",  "Female Leadership")),
+          div(class = "nav-sub-item", actionLink("nav_wagepremium_gender", "Wage Premium by Gender")),
+          div(class = "nav-sub-item", actionLink("nav_gender_wage_premium","Gender Wage Premium by Industry"))),
       div(class = "nav-item", actionLink("nav_download_all", "📥 Download All Graphs"))
     ),
-    
-    # --- Main content ---
     div(
       class = "flex-grow-1 p-4",
       h2("Worldwide Bureaucracy Indicators"),
@@ -434,235 +264,112 @@ ui <- bootstrapPage(
   )
 )
 
-
 # SERVER
-
 server <- function(input, output, session) {
   
-  # 1. Track the active tab via a reactive value  
   active_tab <- reactiveVal("dashboard")
   
-  # put near the top of server()
   safe_acc_open  <- function(id, panels) {
-    if (exists("accordion_open", envir=asNamespace("bslib"), inherits=FALSE)) {
-      bslib::accordion_open(id, panels)
-    }
+    if (exists("accordion_open",  envir = asNamespace("bslib"), inherits = FALSE)) bslib::accordion_open(id, panels)
   }
   safe_acc_close <- function(id, panels) {
-    if (exists("accordion_close", envir=asNamespace("bslib"), inherits=FALSE)) {
-      bslib::accordion_close(id, panels)
-    }
+    if (exists("accordion_close", envir = asNamespace("bslib"), inherits = FALSE)) bslib::accordion_close(id, panels)
   }
   
-  # Update active_tab when each sidebar link is clicked
-  observeEvent(input$nav_dashboard,         { active_tab("dashboard") })
-  observeEvent(input$nav_instructions,         { active_tab("instructions") })
-  observeEvent(input$nav_metadata,          { active_tab("metadata") })
-  observeEvent(input$nav_publications,          { active_tab("publications") })
-  observeEvent(input$nav_wagebill,          { active_tab("wagebill") })
-  observeEvent(input$nav_wagebill_gdp,      { active_tab("wagebill_gdp") })
-  observeEvent(input$nav_public_workforce,  { active_tab("public_workforce") })
-  observeEvent(input$nav_gender_workforce,  { active_tab("gender_workforce") })
-  observeEvent(input$nav_education,         { active_tab("education") })
-  observeEvent(input$nav_public_educ,       { active_tab("public_educ") })
-  observeEvent(input$nav_public_graphs,     { active_tab("public_graphs") })
-  observeEvent(input$nav_wagepremium_gender,{ active_tab("wagepremium_gender") })
-  observeEvent(input$nav_female_leadership, { active_tab("female_leadership") })
-  observeEvent(input$nav_wagepremium,       { active_tab("wagepremium") })
-  observeEvent(input$nav_gender_wage_premium, { active_tab("gender_wage_premium") })
-  observeEvent(input$nav_pay_compression, { active_tab("pay_compression") })
-  observeEvent(input$nav_download_all,      { active_tab("download_all") })
-  observeEvent(input$acc_open, {
-    if (active_tab() == "dashboard")
-      safe_acc_open("ov_acc",
-                    c("About the WWBI","Contact Information","Citation","Disclaimer"))
-  })
+  observeEvent(input$nav_dashboard,          { active_tab("dashboard") })
+  observeEvent(input$nav_instructions,       { active_tab("instructions") })
+  observeEvent(input$nav_metadata,           { active_tab("metadata") })
+  observeEvent(input$nav_publications,       { active_tab("publications") })
+  observeEvent(input$nav_wagebill,           { active_tab("wagebill") })
+  observeEvent(input$nav_wagebill_gdp,       { active_tab("wagebill_gdp") })
+  observeEvent(input$nav_public_workforce,   { active_tab("public_workforce") })
+  observeEvent(input$nav_gender_workforce,   { active_tab("gender_workforce") })
+  observeEvent(input$nav_education,          { active_tab("education") })
+  observeEvent(input$nav_public_educ,        { active_tab("public_educ") })
+  observeEvent(input$nav_public_graphs,      { active_tab("public_graphs") })
+  observeEvent(input$nav_wagepremium_gender, { active_tab("wagepremium_gender") })
+  observeEvent(input$nav_female_leadership,  { active_tab("female_leadership") })
+  observeEvent(input$nav_wagepremium,        { active_tab("wagepremium") })
+  observeEvent(input$nav_gender_wage_premium,{ active_tab("gender_wage_premium") })
+  observeEvent(input$nav_pay_compression,    { active_tab("pay_compression") })
+  observeEvent(input$nav_download_all,       { active_tab("download_all") })
   
-  observeEvent(input$acc_close, {
-    if (active_tab() == "dashboard")
-      safe_acc_close("ov_acc",
-                     c("About the WWBI","Contact Information","Citation","Disclaimer"))
-  })
+  # ── Country dropdowns: use full data_wwbi_long for complete country list ──────
+  all_country_choices <- sort(unique(data_wwbi_long$country_name))
   
-  # 2. Render the main dynamic UI based on active_tab
   output$main_content <- renderUI({
     tab <- active_tab()
     
     if (tab == "dashboard") {
       tagList(
-        # Logos
-        fluidRow(
-          class = "mb-3 logos-row",
-          
-          column(
-            4,
-            div(
-              class = "logo-wrap",
-              tags$img(
-                src = "logos/WBG-Institutions-Horizontal-CMYK-01.jpeg",
-                class = "wb-logo wb-logo--right",
-                alt = "WBG Institutions"
-              )
-            )
-          ),
-          
-          column(
-            4,
-            div(
-              class = "logo-wrap",
-              tags$img(
-                src = "logos/bl_logo.png",
-                class = "bl-logo",
-                alt = "Bureaucracy Lab"
-              )
-            )
-          ),
-          
-          column(
-            4,
-            div(
-              class = "logo-wrap",
-              tags$img(
-                src = "logos/WB-DEC-Impact-horizontal-RGB-high.png",
-                class = "wb-logo wb-logo--dec",
-                alt = "WBG DEC"
-              )
-            )
-          )
-        ),  # <- cierra fluidRow
-        
+        fluidRow(class = "mb-3 logos-row",
+                 column(4, div(class="logo-wrap", tags$img(src="logos/WBG-Institutions-Horizontal-CMYK-01.jpeg", class="wb-logo wb-logo--right", alt="WBG Institutions"))),
+                 column(4, div(class="logo-wrap", tags$img(src="logos/bl_logo.png",                              class="bl-logo",              alt="Bureaucracy Lab"))),
+                 column(4, div(class="logo-wrap", tags$img(src="logos/WB-DEC-Impact-horizontal-RGB-high.png",    class="wb-logo wb-logo--dec", alt="WBG DEC")))
+        ),
         h3("Overview"),
         accordion(
-          id = "ov_acc",
-          multiple = TRUE,
-          open = character(0),
-          
-          accordion_panel(
-            "About the WWBI",
-            tagList(
-              p("The Worldwide Bureaucracy Indicators (WWBI) database is a unique cross-national dataset on public sector employment and wages that aims to fill an information gap, thereby helping researchers, development practitioners, and policymakers gain a better understanding of the personnel dimensions of state capability, the footprint of the public sector within the overall labor market, and the fiscal implications of the public sector wage bill. The dataset is derived from administrative data and household surveys, thereby complementing existing, expert perception-based approaches."),
-              p("The dataset provides answers to some of the most important questions on the level and distribution of employment and wages. A few key indicators include:"),
-              tags$ul(
-                tags$li("Size of the public and private sector workforce"),
-                tags$li("Demographics of public and private sector employment: distributions by gender, age, education, and industry"),
-                tags$li("Gender equity in public and private sectors"),
-                tags$li("Public sector wage premiums"),
-                tags$li("Distributions of public sector wage premiums by education, occupation, industry, and gender"),
-                tags$li("Gender wage gaps in the public and private sectors"),
-                tags$li("Pay compression ratios in public and private sectors (ratio of 90th to 10th percentile earners)"),
-                tags$li("The relative size of the public sector wage bill")
-              )
-            )
+          id = "ov_acc", multiple = TRUE, open = character(0),
+          accordion_panel("About the WWBI",
+                          tagList(
+                            p("The Worldwide Bureaucracy Indicators (WWBI) database is a unique cross-national dataset on public sector employment and wages that aims to fill an information gap, thereby helping researchers, development practitioners, and policymakers gain a better understanding of the personnel dimensions of state capability, the footprint of the public sector within the overall labor market, and the fiscal implications of the public sector wage bill."),
+                            p("Key indicators include:"),
+                            tags$ul(
+                              tags$li("Size of the public and private sector workforce"),
+                              tags$li("Demographics of public and private sector employment"),
+                              tags$li("Gender equity in public and private sectors"),
+                              tags$li("Public sector wage premiums"),
+                              tags$li("Pay compression ratios in public and private sectors")
+                            )
+                          )
           ),
-          
-          accordion_panel(
-            "Contact Information",
-            tags$p(
-              "Flavia Sacco – ", tags$a(href="mailto:fsaccocapurro@worldbank.org","fsaccocapurro@worldbank.org"), br(),
-              "Josefina Silva – ", tags$a(href="mailto:jsilvafuentealba@worldbank.org","jsilvafuentealba@worldbank.org")
-            )
+          accordion_panel("Contact Information",
+                          tags$p(
+                            "Flavia Sacco – ", tags$a(href="mailto:fsaccocapurro@worldbank.org","fsaccocapurro@worldbank.org"), br(),
+                            "Josefina Silva – ", tags$a(href="mailto:jsilvafuentealba@worldbank.org","jsilvafuentealba@worldbank.org")
+                          )
           ),
-          
-          accordion_panel(
-            "Citation",
-            p("We kindly ask all users of the dashboard to cite it as follows: Source: Worldwide Bureaucracy Indicators (WWBI) Dashboard – World Bank.")
+          accordion_panel("Citation",
+                          p("We kindly ask all users of the dashboard to cite it as follows: Source: Worldwide Bureaucracy Indicators (WWBI) Dashboard – World Bank.")
           ),
-          
-          accordion_panel(
-            "Disclaimer",
-            p("The findings, interpretations, and conclusions presented in this dashboard are those of the World Bank staff and do not necessarily reflect the views of the World Bank, its affiliated organizations, the Executive Directors of the World Bank, or the governments they represent. The boundaries, colors, denominations, and other information shown on this dashboard do not imply any judgment on the part of the World Bank concerning the legal status of any territory, or the endorsement or acceptance of such boundaries. The terms “country” or “economy,” as used in this dashboard, are used for statistical convenience and do not imply political independence.")
+          accordion_panel("Disclaimer",
+                          p("The findings, interpretations, and conclusions presented in this dashboard are those of the World Bank staff and do not necessarily reflect the views of the World Bank.")
           )
         ),
-        
-        # Publications
-        fluidRow(
-          column(
-            10,
-            h3("📄 Publications"),
-            wellPanel(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              h4("Download Team Publications:"),
-              tags$ul(
-                tags$li(
-                  downloadLink("pub1", "Innovating Bureaucracy for a More Capable Government"),
-                  br(), tags$small("Report")
-                ),
-                tags$li(
-                  downloadLink("pub2", "Introducing the Worldwide Bureaucracy Indicators: A New Global Dataset on Public Sector Employment and Compensation"),
-                  br(), tags$small("Faisal Ali Baig- World Bank Group, Xu Han- University of Maryland, Zahid Hasnain- World Bank Group, Daniel Rogger- World Bank Group ")
-                ),
-                tags$li(
-                  downloadLink("pub3", "Public Sector Employment and Compensation: An Assessment Framework"),
-                  br(), tags$small("Report")
-                ),
-                tags$li(
-                  downloadLink("pub4", "Worldwide Bureaucracy Indicators"),
-                  br(), tags$small("Report")
-                )
-              )
-            )
-          )
-        )
+        fluidRow(column(10, h3("📄 Publications"),
+                        wellPanel(
+                          h4("Download Team Publications:"),
+                          tags$ul(
+                            tags$li(downloadLink("pub1", "Innovating Bureaucracy for a More Capable Government"), br(), tags$small("Report")),
+                            tags$li(downloadLink("pub2", "Introducing the Worldwide Bureaucracy Indicators"), br(), tags$small("Baig et al.")),
+                            tags$li(downloadLink("pub3", "Public Sector Employment and Compensation: An Assessment Framework"), br(), tags$small("Report")),
+                            tags$li(downloadLink("pub4", "Worldwide Bureaucracy Indicators"), br(), tags$small("Report"))
+                          )
+                        )
+        ))
       )
       
     } else if (tab == "instructions") {
       tagList(
         h3("📘 Instruction Manual"),
-        accordion(
-          id = "inst_acc",
-          multiple = TRUE,
-          open = "About this dashboard",
-          
-          accordion_panel(
-            "About this dashboard",
-            p("This Dashboard is a product of the Bureaucracy Lab, a joint initiative between the Governance Global Practice and the Development Impact Evaluation (DIME) Department of the Research Group at the World Bank."),
-            p("The dashboard allows users to explore key indicators from the Worldwide Bureaucracy Indicators (WWBI) through a variety of interactive visualizations, which can also be exported into a Word report for further use and analysis."),
-            p("Each section of the dashboard presents a set of graphs designed to facilitate benchmarking of state capacity measures across countries, regions, and income groups.")
-          ),
-          
-          accordion_panel(
-            "What each section contains",
-            tags$ul(
-              tags$li(tags$b("Macro-Fundamentals of the Public Sector:"), " This section shows the trends in the size of the public wage bill, expressed as a percentage of both total public expenditure and GDP. It also includes cross-country comparisons of these indicators by income level (measured by GDP per capita)."),
-              tags$li(tags$b("Size and Characteristics of the Public Sector:"), " Examine public sector employment within the overall labor market, workforce distribution by industry, and educational attainment vs. private sector employees."),
-              tags$li(tags$b("Competitiveness of Public Sector Wages:"), " Public sector wage premium vs. private workers, how it varies by education level, and pay compression in public and private sectors."),
-              tags$li(tags$b("Equity in the Public Sector:"), " Female employment and leadership, occupational segregation, and gender wage gaps across public-sector industries."),
-              tags$li(tags$b("Download Graph Report:"), " Download a full report with all visualizations or create a custom report by selecting sections/graphs (DOC format with prefilled text).")
-            )
-          ),
-          
-          accordion_panel(
-            "How to use the dashboard",
-            tags$ol(
-              tags$li("In each tab, select a country of interest and choose comparator countries, regions, or income groups."),
-              tags$li("To check indicator availability, go to “Metadata”. Select an indicator to see which countries have data and their values."),
-              tags$li("Dropdowns only list options with available data for the chosen indicator."),
-              tags$li("The first selected country appears first in graphs and acts as the benchmark."),
-              tags$li("Each tab provides downloadable graphs. To download, select the", icon("camera"), "icon in the top-right corner of each visualization."),
-              tags$li("Or set selections across tabs, then use “Download All Graphs” to export a comprehensive, pre-formatted Word report.")
-            )
-          ),
-          
-          accordion_panel(
-            "Resources & links",
-            tags$p(
-              "GitHub Repository:The construction files for all indicators included in the dataset can be accessed in the repository:",
-              tags$a(href="https://github.com/worldbank/Worldwide-Bureaucracy-Indicators",
-                     "https://github.com/worldbank/Worldwide-Bureaucracy-Indicators", target="_blank")
-            ),
-            tags$p(
-              "Data Catalog: The full WWBI dataset, available in multiple file formats, can be accessed at:",
-              tags$a(href="https://datacatalog.worldbank.org/int/home",
-                     "https://datacatalog.worldbank.org/int/home", target="_blank")
-            ),
-            accordion_panel(
-              "Codebook",
-              p("Further details on the dataset, along with definitions of the indicators and their construction, can be found in the codebook below."),
-              div(style = "margin-top: 8px;",
-                  downloadButton("download_pdf", "📥 Download Codebook", class = "btn btn-primary")
-              )
-            )
-          )
+        accordion(id = "inst_acc", multiple = TRUE, open = "About this dashboard",
+                  accordion_panel("About this dashboard",
+                                  p("This Dashboard is a product of the Bureaucracy Lab, a joint initiative between the Governance Global Practice and the Development Impact Evaluation (DIME) Department of the Research Group at the World Bank.")
+                  ),
+                  accordion_panel("How to use the dashboard",
+                                  tags$ol(
+                                    tags$li("In each tab, select a country of interest and choose comparator countries, regions, or income groups."),
+                                    tags$li("To check indicator availability, go to 'Metadata'."),
+                                    tags$li("The first selected country appears first in graphs and acts as the benchmark."),
+                                    tags$li("Each tab provides downloadable graphs via the camera icon."),
+                                    tags$li("Use 'Download All Graphs' to export a comprehensive Word report.")
+                                  )
+                  ),
+                  accordion_panel("Resources & links",
+                                  tags$p("GitHub:", tags$a(href="https://github.com/worldbank/Worldwide-Bureaucracy-Indicators","https://github.com/worldbank/Worldwide-Bureaucracy-Indicators", target="_blank")),
+                                  tags$p("Data Catalog:", tags$a(href="https://datacatalog.worldbank.org/int/home","https://datacatalog.worldbank.org/int/home", target="_blank")),
+                                  div(style="margin-top:8px;", downloadButton("download_pdf","📥 Download Codebook", class="btn btn-primary"))
+                  )
         )
       )
       
@@ -670,6426 +377,1090 @@ server <- function(input, output, session) {
       tagList(
         h3("Metadata"),
         fluidRow(
-          column(4, div(class = "custom-infobox", infoBox("Indicators", 302, icon = icon("list")))),
-          column(4, div(class = "custom-infobox", infoBox("Economies", length(unique(data_wwbi$country_name)), icon = icon("globe")))),
-          column(4, div(class = "custom-infobox", infoBox("Temporal Coverage (Annual)", "2000-2022", icon = icon("calendar"))))
+          column(4, infoBox("Indicators",  302,                                   icon=icon("list"))),
+          column(4, infoBox("Economies",   length(unique(data_wwbi$country_name)), icon=icon("globe"))),
+          column(4, infoBox("Coverage",    "2000-2022",                           icon=icon("calendar")))
         ),
-        fluidRow(
-          column(4, div(class = "custom-infobox", infoBox("Temporal Coverage (Years)", "22", icon = icon("calendar")))),
-          column(4, div(class = "custom-infobox", infoBox("Last Updated", "2025", icon = icon("clock"))))
-        ),
-        fluidRow(
-          div(style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              "This map shows which countries have reported data for the selected indicator.")
-        ),
-        fluidRow(
-          column(6,
-                 selectInput("indicatorSelect", "Select Indicator",
-                             choices = unique(data_wwbi$indicator_name), selected = NULL)
-          )
-        ),
+        fluidRow(column(6, selectInput("indicatorSelect","Select Indicator", choices=unique(data_wwbi$indicator_name)))),
         fluidRow(textOutput("countryCount")),
-        fluidRow(leafletOutput("worldMap", height = "600px"))
+        fluidRow(leafletOutput("worldMap", height="600px"))
       )
       
     } else if (tab == "wagebill") {
       tagList(
         h3("Wage Bill Graphs"),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     "This visualization explores the wage bill over time for selected countries.")),
         fluidRow(
-          div(style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              "This visualization explores the wage bill over time for selected countries.")
+          # ── CHANGE: use all_country_choices so regions/income groups appear ──
+          column(7, selectInput("countries","Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point",
+                                choices=all_country_choices, multiple=TRUE, width="100%")),
+          column(5, radioButtons("graph_choice", label=tags$span(class="rb-title","Choose wage-bill measure:"),
+                                 choices=c("Wage Bill as % of Public Expenditure"="Public","Wage Bill as % of GDP"="GDP"),
+                                 selected="Public", inline=FALSE))
         ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            )
-          ),
-          column(
-            width = 5,
-            radioButtons(
-              "graph_choice",
-              label = tags$span(class = "rb-title", "Choose wage-bill measure:"),
-              choices  = c("Wage Bill as % of Public Expenditure" = "Public",
-                           "Wage Bill as % of GDP"                  = "GDP"),
-              selected = "Public",
-              inline   = FALSE
-            )
-          )
-        ),
-        fluidRow(plotlyOutput("plotwagebill", height = "500px")),
-        fluidRow(
-          div(style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_wagebill"))
-        ),
-        fluidRow(
-          column(12, downloadButton("downloadWord", "Download Report in Word", class="dl-btn w-100"))
-        ),
-        fluidRow(
-          column(4, downloadButton("dl_csv_wagebill",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
+        fluidRow(plotlyOutput("plotwagebill", height="500px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_wagebill"))),
+        fluidRow(column(12, downloadButton("downloadWord","Download Report in Word", class="dl-btn w-100"))),
+        fluidRow(column(4,  downloadButton("dl_csv_wagebill","Download data (CSV)", class="dl-btn w-100")))
       )
       
     } else if (tab == "wagebill_gdp") {
       tagList(
         h3("Wage Bill & GDP Graphs"),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     "This graph shows the relationship between the size of the wage bill and GDP per capita.")),
         fluidRow(
-          div(
-            style = "background-color: rgba(255,255,255,0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            "This graph shows the relationship between the size of the wage bill and GDP per capita."
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries_gdp",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton("downloadGDPDoc", "Download GDP Analysis Report",
-                           class = "dl-btn w-100")
+          column(7,
+                 selectInput("countries_gdp","Select country(ies)/region(s)/income group(s)",
+                             choices=all_country_choices, multiple=TRUE, width="100%"),
+                 br(),
+                 downloadButton("downloadGDPDoc","Download GDP Analysis Report", class="dl-btn w-100")
           ),
-          column(
-            width = 5,
-            tags$label(class = "form-label fw-semibold", "Choose label type"),
-            radioButtons("label_type", label = NULL,
-                         choices = c("Country", "Region"),
-                         selected = "Country")
+          column(5,
+                 tags$label(class="form-label fw-semibold","Choose label type"),
+                 radioButtons("label_type", label=NULL, choices=c("Country","Region"), selected="Country")
           )
         ),
-        fluidRow(column(12, plotlyOutput("dot_plot_gdp", height = "500px"))),
-        fluidRow(
-          column(
-            12,
-            div(
-              style = "background-color: rgba(255,255,255,0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_dotplot_gdp")
-            )
-          )
-        ),
-        fluidRow(
-          column(12, div(class = "text-end mt-3",
-                         downloadButton("dl_csv_gdp", "Download data (CSV)", class = "dl-btn")))
-        )
+        fluidRow(column(12, plotlyOutput("dot_plot_gdp", height="500px"))),
+        fluidRow(column(12, div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_dotplot_gdp")))),
+        fluidRow(column(12, div(class="text-end mt-3", downloadButton("dl_csv_gdp","Download data (CSV)", class="dl-btn"))))
       )
       
     } else if (tab == "public_workforce") {
       tagList(
         h3("Distribution of Public Sector Employment"),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     "This visualization shows the distribution of the public sector workforce across the three main industries.")),
         fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            "This visualization shows the distribution of the public sector workforce across the three main industries (public administration, health and education)."
+          column(7, selectInput("countries_workforce","Select country(ies)/region(s)/income group(s)",
+                                choices=all_country_choices, multiple=TRUE, width="100%")),
+          column(5,
+                 checkboxGroupInput("selected_graphs_public","Select Graphs to Download",
+                                    choices=c("Multi-Country Graph"="firstGraph","Single-Country Graph"="secondGraph"),
+                                    selected=c("firstGraph","secondGraph")),
+                 downloadButton("downloadGraphsemploymentdist","Download Selected Graphs in Word", class="dl-btn w-100")
           )
         ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries_workforce",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            )
-          ),
-          column(
-            width = 5,
-            checkboxGroupInput(
-              "selected_graphs_public",
-              "Select Graphs to Download",
-              choices  = c("Multi-Country Graph" = "firstGraph",
-                           "Single-Country Graph" = "secondGraph"),
-              selected = c("firstGraph", "secondGraph")
-            ),
-            downloadButton("downloadGraphsemploymentdist",
-                           "Download Selected Graphs in Word",
-                           class = "dl-btn w-100")
-          )
-        ),
-        fluidRow(plotlyOutput("stackedBarGraph", height = "600px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_stackedBarGraph")
-          )
-        ),
-        fluidRow(
-          column(
-            width = 12,
-            selectInput(
-              "selected_country",
-              "Select country/region/income group",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = FALSE,
-              width    = "100%"
-            )
-          )
-        ),
-        fluidRow(plotlyOutput("horizontalStackedBar", height = "600px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_horizontalStackedBar")
-          )
-        ),
-        fluidRow(
-          column(4, downloadButton("dl_csv_public_workforce",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
+        fluidRow(plotlyOutput("stackedBarGraph", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_stackedBarGraph"))),
+        fluidRow(column(12, selectInput("selected_country","Select country/region/income group",
+                                        choices=all_country_choices, multiple=FALSE, width="100%"))),
+        fluidRow(plotlyOutput("horizontalStackedBar", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_horizontalStackedBar"))),
+        fluidRow(column(4, downloadButton("dl_csv_public_workforce","Download data (CSV)", class="dl-btn w-100")))
       )
       
     } else if (tab == "education") {
       tagList(
         h3("Workers with Tertiary Education"),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     "This visualization shows the proportion of workers with tertiary education in the public and private sectors.")),
         fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            "This visualization shows the proportion of workers with tertiary education in the public and private sectors."
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "selected_countries",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadGraphsWordEducation",
-              "Download Tertiary Education Report",
-              class = "dl-btn w-100"
-            )
+          column(7,
+                 selectInput("selected_countries","Select country(ies)/region(s)/income group(s)",
+                             choices=all_country_choices, multiple=TRUE, width="100%"),
+                 br(),
+                 downloadButton("downloadGraphsWordEducation","Download Tertiary Education Report", class="dl-btn w-100")
           ),
-          column(
-            width = 5,
-            tags$label(class = "form-label fw-semibold", "Choose label type"),
-            radioButtons(
-              "label_type_edu",
-              label   = NULL,
-              choices = c("Country", "Region"),
-              selected = "Country",
-              inline  = TRUE
-            )
+          column(5,
+                 tags$label(class="form-label fw-semibold","Choose label type"),
+                 radioButtons("label_type_edu", label=NULL, choices=c("Country","Region"), selected="Country", inline=TRUE)
           )
         ),
-        fluidRow(plotlyOutput("barPlot", height = "600px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_tertiaryEducation")
-          )
-        ),
-        fluidRow(
-          column(4, downloadButton("dl_csv_tertiary_edu",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
-      )
-      
-    } else if (tab == "female_leadership") {
-      tagList(
-        h3("Female Leadership: Occupations and Sector"),
-        fluidRow(
-          column(
-            width = 12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              "This visualization shows the share of females in various occupational groups (Managers/Clerks) in the public and private sectors across selected countries."
-            )
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "selected_countries",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadGraphsWordfemale",
-              "Download Female Leadership Occupations Report",
-              class = "dl-btn w-100"
-            )
-          )
-        ),
-        fluidRow(column(width = 12, plotlyOutput("barPlotwomen", height = "600px"))),
-        fluidRow(
-          column(
-            width = 12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_barPlotwomen")
-            )
-          )
-        ),
-        fluidRow(
-          column(4, downloadButton("dl_csv_female_leadership",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
-      )
-      
-    } else if (tab == "wagepremium_gender") {
-      tagList(
-        h3("Public Sector Wage Premium by Gender"),
-        fluidRow(
-          column(
-            width = 12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              "This visualization explores the public sector wage premium by gender across selected countrie(s)/region(s)/income groups."
-            )
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries_first",
-              "Select country(ies)/region(s)/income group(s) for the first graph – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadGraphswagepremiumbygender",
-              "Download Public Sector Wage Premium by Gender Report",
-              class = "dl-btn w-100"
-            )
-          )
-        ),
-        fluidRow(column(12, plotlyOutput("firstGraphGenderWagePremium", height = "600px"))),
-        fluidRow(
-          column(
-            12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_firstGraphGenderWagePremium")
-            )
-          )
-        ),
-        fluidRow(
-          column(
-            width = 12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              "This visualization explores the public sector wage premium by gender across selected countries and its trend over time."
-            )
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "country_second",
-              "Select country/region/income group",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = FALSE,
-              width    = "100%"
-            )
-          )
-        ),
-        fluidRow(column(12, plotlyOutput("secondGraphGenderWagePremium", height = "600px"))),
-        fluidRow(
-          column(
-            12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_secondGraphGenderWagePremium")
-            )
-          )
-        ),
-        fluidRow(
-          column(4, downloadButton("dl_gender_wageprem_xlsx",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
+        fluidRow(plotlyOutput("barPlot", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_tertiaryEducation"))),
+        fluidRow(column(4, downloadButton("dl_csv_tertiary_edu","Download data (CSV)", class="dl-btn w-100")))
       )
       
     } else if (tab == "wagepremium") {
       tagList(
         h3("Public Sector Wage Premium"),
         fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries_wage_premium",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadWagePremiumReport",
-              "Download Public Sector Wage Premium Report",
-              class = "dl-btn w-100"
-            )
+          column(7,
+                 selectInput("countries_wage_premium","Select country(ies)/region(s)/income group(s)",
+                             choices=all_country_choices, multiple=TRUE, width="100%"),
+                 br(),
+                 downloadButton("downloadWagePremiumReport","Download Wage Premium Report", class="dl-btn w-100")
           )
         ),
-        fluidRow(plotlyOutput("dotPlot", height = "500px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_wage_premium")
-          )
-        ), 
-        fluidRow(
-          column(4, downloadButton("dl_csv_wage_premium",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
+        fluidRow(plotlyOutput("dotPlot", height="500px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_wage_premium"))),
+        fluidRow(column(4, downloadButton("dl_csv_wage_premium","Download data (CSV)", class="dl-btn w-100")))
       )
       
     } else if (tab == "public_educ") {
       tagList(
         h3("Public Sector Wage Premium by Education Level"),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     "This visualization explores the public sector wage premium by education level.")),
         fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            "This visualization explores the public sector wage premium by education level, compared to private formal workers."
+          column(7,
+                 selectInput("selected_country","Select country/region/income group",
+                             choices=all_country_choices, multiple=FALSE, width="100%"),
+                 br(),
+                 downloadButton("downloadEducationWagePremium","Download Education Wage Premium Report", class="dl-btn w-100")
           )
         ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "selected_country",
-              "Select country/region/income group – Your selection will be used as the reference in the graph and report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = FALSE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadEducationWagePremium",
-              "Download Public Sector Wage Premium by Education Level Report",
-              class = "dl-btn w-100"
-            )
-          )
-        ),
-        fluidRow(plotlyOutput("education_wage_premium_plot", height = "600px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_education_wage_premium")
-          )
-        ), 
-        fluidRow(
-          column(4, downloadButton("dl_csv_wagepremium_educ",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
+        fluidRow(plotlyOutput("education_wage_premium_plot", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_education_wage_premium"))),
+        fluidRow(column(4, downloadButton("dl_csv_wagepremium_educ","Download data (CSV)", class="dl-btn w-100")))
       )
+      
     } else if (tab == "public_graphs") {
       tagList(
         h3("Public Sector Employment Graphs"),
-        # Controls for first graph
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries_first",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            )
-          )
-        ),
-        # First graph
-        fluidRow(plotlyOutput("firstGraphpublic", height = "600px")),
-        fluidRow(
-          div(style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_firstGraphpublic"))
-        ),
-        # Single-country selector for second graph
-        fluidRow(
-          column(
-            12,
-            selectInput("country_second", "Select country/region/income group",
-                        choices = unique(data_wwbi_long$country_name), multiple = FALSE, width = "100%")
-          )
-        ),
-        # Second graph
-        fluidRow(plotlyOutput("secondGraphpublic", height = "600px")),
-        fluidRow(
-          div(style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_secondGraphpublic"))
-        ),
-        # Download button
-        fluidRow(
-          column(12, downloadButton("downloadGraphsWord", "Download Graphs as Word File", class = "dl-btn w-100"))
-        ), 
-        fluidRow(
-          column(
-            width = 12,
-            div(class = "text-end",
-                downloadButton("dl_public_emp_data", "Download data CVS", class = "dl-btn"))
-          )
-        )
+        fluidRow(column(7, selectInput("countries_first","Select country(ies)/region(s)/income group(s)",
+                                       choices=all_country_choices, multiple=TRUE, width="100%"))),
+        fluidRow(plotlyOutput("firstGraphpublic", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_firstGraphpublic"))),
+        fluidRow(column(12, selectInput("country_second","Select country/region/income group",
+                                        choices=all_country_choices, multiple=FALSE, width="100%"))),
+        fluidRow(plotlyOutput("secondGraphpublic", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_secondGraphpublic"))),
+        fluidRow(column(12, downloadButton("downloadGraphsWord","Download Graphs as Word File", class="dl-btn w-100"))),
+        fluidRow(column(12, div(class="text-end", downloadButton("dl_public_emp_data","Download data CSV", class="dl-btn"))))
       )
       
     } else if (tab == "gender_workforce") {
       tagList(
         h3("Female share of employment"),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_firstGraphGenderWorkforce"))),
         fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            "This visualization explores female employment in the public and private sectors across selected countries."
+          column(7,
+                 selectInput("countries_gender","Select country(ies)/region(s)/income group(s)",
+                             choices=all_country_choices, multiple=TRUE, width="100%"),
+                 br(),
+                 downloadButton("downloadGraphsWordGender","Download Female Share of Employment Report", class="dl-btn w-100")
           )
         ),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_firstGraphGenderWorkforce")
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "countries_gender",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadGraphsWordGender",
-              "Download Female Share of Employment Report",
-              class = "dl-btn w-100"
-            )
-          )
-        ),
-        fluidRow(plotlyOutput("firstGraphGenderWorkforce", height = "600px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_secondGraphGenderWorkforce")
-          )
-        ),
-        fluidRow(
-          column(
-            12,
-            selectInput(
-              "country_gender",
-              "Select country/region/income group",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = FALSE,
-              width    = "100%"
-            )
-          )
-        ),
-        fluidRow(plotlyOutput("secondGraphGenderWorkforce", height = "600px")),
-        fluidRow(
-          column(
-            4,
-            downloadButton("dl_gender_workforce_xlsx",
-                           "Download data (CSV)",
-                           class = "dl-btn w-100")
-          )
-        )
+        fluidRow(plotlyOutput("firstGraphGenderWorkforce", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_secondGraphGenderWorkforce"))),
+        fluidRow(column(12, selectInput("country_gender","Select country/region/income group",
+                                        choices=all_country_choices, multiple=FALSE, width="100%"))),
+        fluidRow(plotlyOutput("secondGraphGenderWorkforce", height="600px")),
+        fluidRow(column(4, downloadButton("dl_gender_workforce_xlsx","Download data (CSV)", class="dl-btn w-100")))
+      )
+      
+    } else if (tab == "female_leadership") {
+      tagList(
+        h3("Female Leadership: Occupations and Sector"),
+        fluidRow(column(7,
+                        selectInput("selected_countries","Select country(ies)/region(s)/income group(s)",
+                                    choices=all_country_choices, multiple=TRUE, width="100%"),
+                        br(),
+                        downloadButton("downloadGraphsWordfemale","Download Female Leadership Report", class="dl-btn w-100")
+        )),
+        fluidRow(column(12, plotlyOutput("barPlotwomen", height="600px"))),
+        fluidRow(column(12, div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_barPlotwomen")))),
+        fluidRow(column(4, downloadButton("dl_csv_female_leadership","Download data (CSV)", class="dl-btn w-100")))
+      )
+      
+    } else if (tab == "wagepremium_gender") {
+      tagList(
+        h3("Public Sector Wage Premium by Gender"),
+        fluidRow(column(7,
+                        selectInput("countries_first","Select country(ies)/region(s)/income group(s)",
+                                    choices=all_country_choices, multiple=TRUE, width="100%"),
+                        br(),
+                        downloadButton("downloadGraphswagepremiumbygender","Download Wage Premium by Gender Report", class="dl-btn w-100")
+        )),
+        fluidRow(column(12, plotlyOutput("firstGraphGenderWagePremium", height="600px"))),
+        fluidRow(column(12, div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_firstGraphGenderWagePremium")))),
+        fluidRow(column(7, selectInput("country_second","Select country/region/income group",
+                                       choices=all_country_choices, multiple=FALSE, width="100%"))),
+        fluidRow(column(12, plotlyOutput("secondGraphGenderWagePremium", height="600px"))),
+        fluidRow(column(12, div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_secondGraphGenderWagePremium")))),
+        fluidRow(column(4, downloadButton("dl_gender_wageprem_xlsx","Download data (CSV)", class="dl-btn w-100")))
       )
       
     } else if (tab == "gender_wage_premium") {
       tagList(
         h3("Gender Wage Premium in Public Sector by Industry"),
-        fluidRow(
-          column(
-            width = 12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              "This visualization explores the gender wage premium in the public sector by industry across selected countries."
-            )
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              "selected_countries",
-              "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices  = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadGenderWagePremium",
-              "Download Gender Wage Premium in Public Sector by Industry Report",
-              class = "dl-btn w-100"
-            )
-          )
-        ),
-        fluidRow(column(12, plotOutput("gender_wage_barplot", height = "600px"))),
-        fluidRow(
-          column(
-            width = 12,
-            div(
-              style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              textOutput("note_gender_wage_barplot")
-            )
-          )
-        ), 
-        fluidRow(
-          column(
-            4,
-            downloadButton(
-              "dl_csv_gender_wage_industry",
-              "Download data (CSV)",
-              class = "dl-btn w-100"
-            )
-          )
-        )
+        fluidRow(column(7,
+                        selectInput("selected_countries","Select country(ies)/region(s)/income group(s)",
+                                    choices=all_country_choices, multiple=TRUE, width="100%"),
+                        br(),
+                        downloadButton("downloadGenderWagePremium","Download Gender Wage Premium Report", class="dl-btn w-100")
+        )),
+        fluidRow(column(12, plotOutput("gender_wage_barplot", height="600px"))),
+        fluidRow(column(12, div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_gender_wage_barplot")))),
+        fluidRow(column(4, downloadButton("dl_csv_gender_wage_industry","Download data (CSV)", class="dl-btn w-100")))
       )
+      
     } else if (tab == "pay_compression") {
       tagList(
         h3("Pay Compression Ratios"),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            "This visualization explores pay compression in the public and private sectors across selected countries."
-          )
-        ),
-        fluidRow(
-          column(
-            width = 7,
-            selectInput(
-              inputId = "countries_first",
-              label   = "Select country(ies)/region(s)/income group(s) – Your first selection will be treated as the reference point in both the graph and the output report",
-              choices = sort(unique(data_wwbi_long$country_name)),
-              multiple = TRUE,
-              width    = "100%"
-            ),
-            br(),
-            downloadButton(
-              "downloadPayCompressionDoc",
-              "Download Pay Compression Ratios Report",
-              class = "dl-btn w-100"
-            )
-          )
-        ),
-        fluidRow(plotlyOutput("paycompression_plot", height = "600px")),
-        fluidRow(
-          div(
-            style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-            textOutput("note_dotplot_pay")
-          )
-        ),
-        fluidRow(
-          column(4, downloadButton("dl_csv_pay_compression",  "Download data (CSV)",  class = "dl-btn w-100"))
-        )
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     "This visualization explores pay compression in the public and private sectors across selected countries.")),
+        fluidRow(column(7,
+                        selectInput("countries_first","Select country(ies)/region(s)/income group(s)",
+                                    choices=all_country_choices, multiple=TRUE, width="100%"),
+                        br(),
+                        downloadButton("downloadPayCompressionDoc","Download Pay Compression Report", class="dl-btn w-100")
+        )),
+        fluidRow(plotlyOutput("paycompression_plot", height="600px")),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;", textOutput("note_dotplot_pay"))),
+        fluidRow(column(4, downloadButton("dl_csv_pay_compression","Download data (CSV)", class="dl-btn w-100")))
       )
       
     } else if (tab == "download_all") {
       tagList(
         h3("Download Graph Reports"),
-        fluidRow(
-          div(style = "background-color: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 10px; padding: 20px;",
-              p("You can download a comprehensive report with all graphs or select specific graphs to include in your report.",
-                style = "font-size: 16px; color: #333;")
-          )
-        ),
+        fluidRow(div(style="background-color:rgba(255,255,255,0.05);border:1px solid white;border-radius:10px;padding:20px;",
+                     p("Download a comprehensive report with all graphs or select specific graphs.", style="font-size:16px;color:#333;"))),
         br(),
-        fluidRow(
-          column(6, align = "center",
-                 selectInput(
-                   inputId = "download_report_countries",
-                   label = "Select countries/regions/income group(s) for the report/slides:",
-                   choices = unique(data_wwbi_long$country_name),
-                   selected = c("Chile"),
-                   multiple = TRUE,
-                   selectize = TRUE
-                 )
-          )
-        ),
+        fluidRow(column(6, align="center",
+                        selectInput("download_report_countries","Select countries/regions/income group(s) for the report:",
+                                    choices=all_country_choices, selected=c("Chile"), multiple=TRUE, selectize=TRUE)
+        )),
         h4("Download a Custom Report"),
-        checkboxGroupInput(
-          inputId = "selected_graphs",
-          label = "Select Graphs to Include:",
-          choices = list(
-            "Wage Bill" = "wagebill",
-            "Wage Bill as % of GDP" = "wagebill_gdp",
-            "Tertiary Education" = "tertiaryeducation",
-            "Public Sector Wage Premium by Education Level" = "wagepremiumeducation",
-            "Public Employment" = "public_employment",
-            "Public sector Wage Premium by Gender" = "wagepremiumgender",
-            "Public Sector Workforce" = "public_workforce",
-            "Female share of employment" = "gender_workforce",
-            "Female Leadership Occupations" = "female_leadership",
-            "Wage Premium" = "wagepremium",
-            "Gender Wage premium in Public Sector by Industry" = "gender_wage_premium",
-            "Pay Compression Ratios" = "pay_compression"
-          ),
-          selected = c("wagebill", "public_employment")
+        checkboxGroupInput("selected_graphs","Select Graphs to Include:",
+                           choices=list(
+                             "Wage Bill"="wagebill","Wage Bill as % of GDP"="wagebill_gdp",
+                             "Tertiary Education"="tertiaryeducation","Wage Premium by Education"="wagepremiumeducation",
+                             "Public Employment"="public_employment","Wage Premium by Gender"="wagepremiumgender",
+                             "Public Sector Workforce"="public_workforce","Female Employment"="gender_workforce",
+                             "Female Leadership"="female_leadership","Wage Premium"="wagepremium",
+                             "Gender Wage Premium by Industry"="gender_wage_premium","Pay Compression"="pay_compression"
+                           ),
+                           selected=c("wagebill","public_employment")
         ),
         br(),
         fluidRow(
-          column(6, align = "center",
-                 downloadButton("downloadAllGraphsDoc", "\U1F4C4 Download Full Word Report",
-                                style = "padding: 10px 20px; font-size: 16px; margin-top: 10px;")
-          ),
-          column(6, align = "center",
-                 downloadButton("downloadSelectedGraphsDoc", "\U1F4C4 Download Custom Word Report",
-                                style = "padding: 10px 20px; font-size: 16px; margin-top: 10px;")
-          ),
-          column(6, align = "center",
-                 downloadButton("downloadSelectedGraphsPPT", "\U1F4CA Download PowerPoint Slides",
-                                style = "padding: 10px 20px; font-size: 16px; margin-top: 10px;")
-          )
+          column(6, align="center", downloadButton("downloadAllGraphsDoc","\U1F4C4 Download Full Word Report", style="padding:10px 20px;font-size:16px;margin-top:10px;")),
+          column(6, align="center", downloadButton("downloadSelectedGraphsDoc","\U1F4C4 Download Custom Word Report", style="padding:10px 20px;font-size:16px;margin-top:10px;")),
+          column(6, align="center", downloadButton("downloadSelectedGraphsPPT","\U1F4CA Download PowerPoint Slides", style="padding:10px 20px;font-size:16px;margin-top:10px;"))
         )
       )
     }
   })
   
-  # ---------------------------
-  
-  output$download_pdf <- downloadHandler(
-    filename = "Codebook and Explanatory Note.pdf",
-    content = function(file) {
-      file.copy(file.path(data_path, "Files", "WWBI Codebook v3.1.pdf"), file)
-    }
-  )
-  
-  #Publications 
-  
-  output$pub1 <- downloadHandler(
-    filename = function() {
-      "Innovating-Bureaucracy-for-a-More-Capable-Government.pdf"
-    },
-    content = function(file) {
-      file.copy(
-        file.path(data_path, "Files", "Innovating-Bureaucracy-for-a-More-Capable-Government.pdf"),
-        file
-      )
-    }
-  )
-  output$pub2 <- downloadHandler(
-    filename = function() {
-      "Public Administration Review - 2021 - Baig - Introducing the Worldwide Bureaucracy Indicators  A New Global Dataset on.pdf"
-    },
-    content = function(file) {
-      file.copy(
-        file.path(data_path, "Files", "Public Administration Review - 2021 - Baig - Introducing the Worldwide Bureaucracy Indicators  A New Global Dataset on.pdf"),
-        file
-      )
-    }
-  )
-  
-  output$pub3 <- downloadHandler(
-    filename = function() {
-      "Public-Sector-Employment-and-Compensation-An-Assessment-Framework.pdf"
-    },
-    content = function(file) {
-      file.copy(
-        file.path(data_path, "Files", "Public-Sector-Employment-and-Compensation-An-Assessment-Framework.pdf"),
-        file
-      )
-    }
-  )
-  
-  output$pub4 <- downloadHandler(
-    filename = function() {
-      "Worldwide-Bureaucracy-Indicators-Methodology-Insights-and-Applications.pdf"
-    },
-    content = function(file) {
-      file.copy(
-        file.path(data_path, "Files", "Worldwide-Bureaucracy-Indicators-Methodology-Insights-and-Applications.pdf"),
-        file
-      )
-    }
-  )
-  
-  #Sections 
-  
-  
-  # 3. All your original outputs and downloadHandlers follow.
-  # (For brevity, the code below is the same as in your original server code.)
-  
-  # Reactive expression: select the appropriate dataset based on the radio buttons
+  # ── WAGE BILL ────────────────────────────────────────────────────────────────
+  # KEY CHANGE: wage_bill_publicexp and wage_bill_gdp are already filtered to
+  # time-series rows (is_latest == FALSE) at load time above, so charts show
+  # the full trend rather than a single point.
   
   selected_data <- reactive({
-    req(input$countries)  # Wait until the user selects at least one country
+    req(input$countries)
     if (input$graph_choice == "GDP") {
-      # Use wage_bill_gdp if the user selects "GDP"
       wage_bill_gdp %>% filter(country_name %in% input$countries)
     } else {
-      # Otherwise, use wage_bill_publicexp
       wage_bill_publicexp %>% filter(country_name %in% input$countries)
     }
   })
   
-  # Render the Plotly graph for the wage bill
-  
   output$plotwagebill <- renderPlotly({
     d <- selected_data()
-    
-    if (nrow(d) == 0) {
-      return(plotly_empty(type = "scatter", mode = "markers") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 )))
-    }
-    
-    # Set the title and y-axis label depending on the selection:
-    title_text <- ifelse(input$graph_choice == "GDP",
-                         "Wage Bill as % of GDP Over Time",
-                         "Wage Bill as % of Public Expenditure Over Time")
-    
-    y_label <- ifelse(input$graph_choice == "GDP",
-                      "Wage Bill (% of GDP)",
-                      "Wage Bill (% of Public Expenditure)")
-    
-    # Create the Plotly graph
-    plot_ly(data = d,
-            x = ~year,
-            y = ~value,
-            color = ~country_name,
-            type = "scatter",
-            mode = "lines+markers",
-            marker = list(size = 8)) %>%
-      layout(
-        title = title_text,
-        xaxis = list(title = "Year", dtick = 2),
-        yaxis = list(title = y_label),
-        legend = list(title = list(text = "Indicator"))
-      )
+    if (nrow(d) == 0) return(plotly_empty(type="scatter",mode="markers") %>% layout(title="No data available"))
+    title_text <- ifelse(input$graph_choice=="GDP","Wage Bill as % of GDP Over Time","Wage Bill as % of Public Expenditure Over Time")
+    y_label    <- ifelse(input$graph_choice=="GDP","Wage Bill (% of GDP)","Wage Bill (% of Public Expenditure)")
+    plot_ly(data=d, x=~year, y=~value, color=~country_name, type="scatter", mode="lines+markers", marker=list(size=8)) %>%
+      layout(title=title_text, xaxis=list(title="Year",dtick=2), yaxis=list(title=y_label), legend=list(title=list(text="Country")))
   })
+  
   output$note_wagebill <- renderText({
-    if (input$graph_choice == "GDP") {
-      "Note: This indicator represents the wage bill as a percentage of GDP, measuring the public sector's wage cost relative to the total economy."
-    } else {
-      "Note: This indicator represents the wage bill as a percentage of public expenditure, reflecting how much of government spending goes to wages."
-    }
+    if (input$graph_choice=="GDP") "Note: Wage bill as a percentage of GDP." else "Note: Wage bill as a percentage of public expenditure."
   })
-  output$downloadWord <- downloadHandler(
-    filename = function() {
-      paste0("Wage_Bill_Analysis_", Sys.Date(), ".docx")
-    },
-    content = function(file) {
-      # Use the first selected country from the input "countries"
-      first_country <- if (!is.null(input$countries) & length(input$countries) > 0) {
-        input$countries[1]
-      } else {
-        "Bangladesh"  # Default fallback
-      }
-      
-      # Get the region using countrycode
-      first_region <- countrycode(first_country, origin = "country.name", destination = "region")
-      
-      report_title <- paste("Wage Bill Analysis Report -", first_country)
-      doc <- read_docx()
-      
-      # Define title style
-      title_style <- fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- doc %>% body_add_fpar(fpar(ftext(report_title, prop = title_style)))
-      
-      # Add a subtitle
-      doc <- doc %>% body_add_par("The macro fundamentals of the public sector", style = "heading 3")
-      
-      # Create a dynamic introduction text
-      intro_text <- paste0(
-        "This note presents evidence on public sector employment and compensation practices in ", first_country,
-        " using the Worldwide Bureaucracy Indicators (WWBI). The primary data source is the Labor Force Survey (LFS), conducted by the Bureau of Statistics, ",
-        "which offers extensive, nationally representative data over multiple years up to 2022. ", 
-        "For international comparisons, the analysis includes a set of peer countries for benchmarking, with a particular focus on countries from the ",
-        first_region, " region and other aspirational peers."
-      )
-      
-      doc <- doc %>% body_add_par(intro_text, style = "Normal")
-      
-      # --- Dynamic Analysis Paragraph ---
-      selected_countries <- input$countries  # User-selected comparison countries
-      
-      # Get data for the selected country
-      data_country <- wage_bill_publicexp %>% filter(country_name == first_country)
-      
-      # Extract the wage bill values for 2010 and 2022 (if available)
-      value_2010 <- data_country %>% filter(year == 2010) %>% pull(value)
-      value_2022 <- data_country %>% filter(year == 2022) %>% pull(value)
-      
-      # Handle missing data
-      if (length(value_2010) == 0) value_2010 <- NA
-      if (length(value_2022) == 0) value_2022 <- NA
-      
-      # Determine whether the wage bill is "low," "moderate," or "high" compared to selected peers
-      avg_peer_wage <- wage_bill_publicexp %>%
-        filter(country_name %in% selected_countries, year == 2022) %>%
-        summarise(mean_wage = mean(value, na.rm = TRUE)) %>%
-        pull(mean_wage)
-      
-      comparison_text <- if (!is.na(value_2022) & !is.na(avg_peer_wage)) {
-        if (value_2022 < avg_peer_wage * 0.8) {
-          "a relatively low"
-        } else if (value_2022 > avg_peer_wage * 1.2) {
-          "a relatively high"
-        } else {
-          "a moderate"
-        }
-      } else {
-        "an uncertain"
-      }
-      
-      # Select top 3 highest wage bill countries among the user's selection
-      top_countries <- wage_bill_publicexp %>%
-        filter(country_name %in% selected_countries, year == 2022) %>%
-        arrange(desc(value)) %>%
-        slice(1:3) %>%
-        pull(country_name)
-      
-      top_countries_text <- paste(top_countries, collapse = ", ")
-      
-      # Determine the wage bill comparison text
-      # Ensure we correctly compare first_country's wage bill to the selected countries
-      wage_difference_text <- if (!is.na(value_2022) & !is.na(avg_peer_wage)) {
-        if (value_2022 > avg_peer_wage) {
-          "lower"
-        } else if (value_2022 < avg_peer_wage) {
-          "higher"
-        } else {
-          "similar"
-        }
-      } else {
-        "uncertain"
-      }
-      
-      # Get the last available year for the selected country
-      last_year <- wage_bill_publicexp %>%
-        filter(country_name == first_country) %>%
-        summarise(last_year = max(year, na.rm = TRUE)) %>%
-        pull(last_year)
-      
-      # Construct the final analysis text dynamically
-      analysis_text <- paste0(
-        "The country’s wage bill as a percentage of public expenditures has ",
-        "In 2010, the wage bill accounted for around ", 
-        ifelse(is.na(value_2010), "N/A", round(value_2010, 1)), 
-        " percent of public expenditures, but this gradually changed, reaching ", 
-        ifelse(is.na(value_2022), "N/A", round(value_2022, 1)), 
-        " percent in ", last_year, ". ",
-        "Compared to other countries in the region and global comparators, ", first_country, 
-        " allocates ", comparison_text, " proportion of its budget to public sector wages. ",
-        "For instance, in ", last_year, ", ", first_country, "’s wage bill stands at ",  
-        ifelse(is.na(value_2022), "N/A", round(value_2022, 1)), 
-        " percent, whereas countries like ", top_countries_text, 
-        " had ", wage_difference_text, " wage bills during the same period. ",
-        "This trend reflects ", first_country, "’s approach to public sector wage spending, but it also raises questions about whether this level of spending affects the government's ability to effectively deliver public services."
-      )
-      
-      
-      doc <- doc %>% body_add_par(analysis_text, style = "Normal")
-      
-      # --- Add the Graph Based on User Selection ---
-      if (input$graph_choice == "GDP") {
-        graph_data <- wage_bill_gdp %>% filter(country_name %in% input$countries)
-        
-        graph <- ggplot(graph_data, aes(x = year, y = value, color = country_name)) +
-          geom_line(size = 1.2) + 
-          geom_point(size = 3) +
-          labs(title = "Wage Bill as % of GDP Over Time",
-               x = "Year",
-               y = "Wage Bill (% of GDP)") +
-          theme_minimal()
-        
-        doc <- doc %>% 
-          body_add_gg(value = graph, style = "centered") %>%
-          body_add_par(ifelse(input$graph_choice == "GDP",
-                              "Note: This indicator represents the wage bill as a percentage of GDP, measuring the public sector's wage cost relative to the total economy.",
-                              "Note: This indicator represents the wage bill as a percentage of public expenditure, reflecting how much of government spending goes to wages."), 
-                       style = "Normal")  %>%
-          body_add_par(paste0("This graph shows the wage bill as a percentage of GDP over time for the selected countries. ",
-                              "For example, in 2022, ", first_country, " had a wage bill of ", 
-                              ifelse(is.na(value_2022), "N/A", round(value_2022, 1)), "% of GDP."), 
-                       style = "Normal")
-        
-      } else {
-        graph_data <- wage_bill_publicexp %>% filter(country_name %in% input$countries)
-        
-        graph <- ggplot(graph_data, aes(x = year, y = value, color = country_name)) +
-          geom_line(size = 1.2) + 
-          geom_point(size = 3) +
-          labs(title = "Wage Bill as % of Public Expenditure Over Time",
-               x = "Year",
-               y = "Wage Bill (% of Public Expenditure)") +
-          theme_minimal()
-        
-        doc <- doc %>% 
-          body_add_gg(value = graph, style = "centered") %>%
-          body_add_par(paste0("This graph shows the wage bill as a percentage of public expenditure over time for the selected countries. ",
-                              "For instance, in 2022, ", first_country, "’s wage bill accounted for ", 
-                              ifelse(is.na(value_2022), "N/A", round(value_2022, 1)), "% of public expenditure."), 
-                       style = "Normal")
-      }
-      
-      # Save the document
-      print(doc, target = file)
-    }
-  )
-  output$dl_csv <- downloadHandler(
-    filename = function() {
-      type <- if (input$graph_choice == "GDP") "gdp" else "publicexp"
-      paste0("wagebill_", type, "_", paste(input$countries, collapse = "-"), ".csv")
-    },
-    content = function(file) {
-      d <- selected_data() %>% arrange(country_name, year)
-      validate(need(nrow(d) > 0, "No data to download"))
-      readr::write_csv(d, file)
-    }
-  )
-  
-  generate_wage_bill_analysis_section <- function(doc, selected_countries) {
-    # ✅ Extract first selected country
-    first_country <- selected_countries[1] %||% "Unknown Country"
-    
-    # ✅ Get region using countrycode
-    first_region <- countrycode(first_country, origin = "country.name", destination = "region") %||% "its region"
-    
-    # ✅ Filter data
-    data_country <- wage_bill_publicexp %>% filter(country_name == first_country)
-    value_2010 <- data_country %>% filter(year == 2010) %>% pull(value) %>% first() %||% NA
-    value_2022 <- data_country %>% filter(year == 2022) %>% pull(value) %>% first() %||% NA
-    
-    last_year <- data_country %>% summarise(last_year = max(year, na.rm = TRUE)) %>% pull(last_year)
-    
-    # ✅ Filter for all countries selected
-    graph_data_gdp <- wage_bill_gdp %>% filter(country_name %in% selected_countries)
-    graph_data_exp <- wage_bill_publicexp %>% filter(country_name %in% selected_countries)
-    
-    # ✅ Create and save graphs
-    graph_gdp <- ggplot(graph_data_gdp, aes(x = year, y = value, color = country_name)) +
-      geom_line(size = 1.2) + geom_point(size = 3) +
-      labs(title = "Wage Bill as % of GDP Over Time", x = "Year", y = "Wage Bill (% of GDP)", color = "Country") +
-      theme_minimal()
-    
-    graph_exp <- ggplot(graph_data_exp, aes(x = year, y = value, color = country_name)) +
-      geom_line(size = 1.2) + geom_point(size = 3) +
-      labs(title = "Wage Bill as % of Public Expenditure Over Time", x = "Year", y = "Wage Bill (% of Public Expenditure)", color = "Country") +
-      theme_minimal()
-    
-    img_path_gdp <- tempfile(fileext = ".png")
-    ggsave(img_path_gdp, plot = graph_gdp, width = 8, height = 6, dpi = 300)
-    
-    img_path_exp <- tempfile(fileext = ".png")
-    ggsave(img_path_exp, plot = graph_exp, width = 8, height = 6, dpi = 300)
-    
-    # ✅ GDP interpretation
-    regional_trend <- wage_bill_gdp %>%
-      filter(wb_region == first_region) %>%
-      summarise(avg_value = mean(value, na.rm = TRUE)) %>%
-      pull(avg_value)
-    
-    relationship_text <- case_when(
-      is.na(regional_trend) ~ "an uncertain relationship",
-      regional_trend < -0.2 ~ "a negative relationship",
-      regional_trend > 0.2 ~ "a positive relationship",
-      TRUE ~ "no strong relationship"
-    )
-    
-    first_country_wage_bill <- wage_bill_gdp %>%
-      filter(country_name == first_country) %>%
-      summarise(latest = max(value, na.rm = TRUE)) %>%
-      pull(latest)
-    
-    regional_avg_wage_bill <- wage_bill_gdp %>%
-      filter(wb_region == first_region) %>%
-      summarise(mean_wage = mean(value, na.rm = TRUE)) %>%
-      pull(mean_wage)
-    
-    spending_pattern <- if (!is.na(first_country_wage_bill) && !is.na(regional_avg_wage_bill)) {
-      if (first_country_wage_bill > regional_avg_wage_bill * 1.2) {
-        "more than expected"
-      } else if (first_country_wage_bill < regional_avg_wage_bill * 0.8) {
-        "less than expected"
-      } else {
-        "roughly as expected"
-      }
-    } else {
-      "uncertain compared to regional peers"
-    }
-    
-    first_country_2010 <- wage_bill_gdp %>%
-      filter(country_name == first_country, year == 2010) %>%
-      summarise(value = first(value)) %>%
-      pull(value) %>%
-      round(0) %||% NA
-    
-    first_country_latest <- wage_bill_gdp %>%
-      filter(country_name == first_country, year == last_year) %>%
-      summarise(value = first(value)) %>%
-      pull(value) %>%
-      round(0) %||% NA
-    
-    
-    trend_text <- if (!is.na(first_country_2010) && !is.na(first_country_latest)) {
-      if (first_country_latest > first_country_2010) {
-        paste0("an increase from ", round(first_country_2010, 0), "% in 2010 to ", round(first_country_latest, 0), "% in ", last_year, ".")
-      } else if (first_country_latest < first_country_2010) {
-        paste0("a decrease from ", round(first_country_2010, 0), "% in 2010 to ", round(first_country_latest, 0), "% in ", last_year, ".")
-      } else {
-        paste0("no significant change, remaining at ", round(first_country_2010, 0), "% from 2010 to ", last_year, ".")
-      }
-    } else {
-      "insufficient data to determine the trend."
-    }
-    
-    gdp_interpretation <- paste0(
-      "Figure 1.1 illustrates the Wage bill as a percentage of GDP for the selected countries, showing ", relationship_text, 
-      " between a country’s level of economic development and the size of its public sector in the ", first_region, " region. ",
-      first_country, " spends ", spending_pattern, " on its public sector wage bill compared to peers.\n\n",
-      "For ", first_country, ", the wage bill as a percentage of GDP shows ", trend_text
-    )
-    
-    doc <- doc %>%
-      body_add_par("Wage Bill as % of GDP Over Time", style = "heading 2") %>%
-      body_add_img(src = img_path_gdp, width = 6, height = 4) %>%
-      body_add_par(gdp_interpretation, style = "Normal")
-    
-    # ✅ Public Expenditure analysis
-    exp_data <- wage_bill_publicexp %>% filter(country_name == first_country)
-    
-    exp_2010 <- exp_data %>%
-      filter(year == 2010) %>%
-      summarise(value = max(value, na.rm = TRUE)) %>%
-      pull(value) %>%
-      round(0) %||% NA
-    
-    exp_latest <- exp_data %>%
-      filter(year == last_year) %>%
-      summarise(value = max(value, na.rm = TRUE)) %>%
-      pull(value) %>%
-      round(0) %||% NA
-    
-    country_volatility <- sd(exp_data$value, na.rm = TRUE)
-    regional_volatility <- wage_bill_publicexp %>%
-      filter(wb_region == first_region) %>%
-      group_by(country_name) %>%
-      summarise(vol = sd(value, na.rm = TRUE)) %>%
-      summarise(mean_vol = mean(vol, na.rm = TRUE)) %>%
-      pull(mean_vol)
-    
-    stability_text <- if (!is.na(country_volatility) && !is.na(regional_volatility)) {
-      if (country_volatility < regional_volatility * 0.8) {
-        "more stable"
-      } else if (country_volatility > regional_volatility * 1.2) {
-        "more volatile"
-      } else {
-        "similar in stability"
-      }
-    } else {
-      "uncertain compared to regional peers"
-    }
-    
-    exp_trend_text <- if (!is.na(exp_2010) && !is.na(exp_latest)) {
-      paste0(exp_2010, "% in 2010 and has ",
-             if (exp_latest > exp_2010) "increased" else if (exp_latest < exp_2010) "decreased" else "remained the same",
-             " to ", exp_latest, "% in ", last_year, ".")
-    } else {
-      "varied over time, as shown in Figure 1.2."
-    }
-    
-    doc <- doc %>%
-      body_add_par("Wage Bill as % of Public Expenditure Over Time", style = "heading 2") %>%
-      body_add_img(src = img_path_exp, width = 6, height = 4) %>%
-      body_add_par(
-        paste0(
-          "The wage bill as a share of public expenditures in ", first_country, " was ", exp_trend_text,
-          " The public sector wage bill in ", first_country, " has exhibited ", stability_text, "."
-        ), 
-        style = "Normal"
-      )
-    
-    return(doc)
-  }
-  
-  #Slides
-  
-  generate_wage_bill_analysis_slide <- function(ppt, selected_countries) {
-    # Validate selected countries
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      return(ppt)
-    }
-    
-    # Filter data for graphs
-    graph_data_gdp <- wage_bill_gdp %>% filter(country_name %in% selected_countries)
-    graph_data_exp <- wage_bill_publicexp %>% filter(country_name %in% selected_countries)
-    
-    if (nrow(graph_data_gdp) == 0 && nrow(graph_data_exp) == 0) {
-      return(ppt)
-    }
-    
-    # Graph 1: Wage Bill as % of GDP
-    if (nrow(graph_data_gdp) > 0) {
-      graph_gdp <- ggplot(graph_data_gdp, aes(x = year, y = value, color = country_name)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        labs(
-          title = "Wage Bill as % of GDP Over Time", 
-          x = "Year", y = "Wage Bill (% of GDP)", color = "Country"
-        ) +
-        theme_minimal()
-      
-      img_path_gdp <- tempfile(fileext = ".png")
-      ggsave(img_path_gdp, plot = graph_gdp, width = 8, height = 6, dpi = 300)
-      
-      ppt <- ppt %>%
-        add_slide(layout = "Title and Content", master = "Office Theme") %>%
-        ph_with(external_img(img_path_gdp, height = 5, width = 7), location = ph_location_type(type = "body"))
-    }
-    
-    # Graph 2: Wage Bill as % of Public Expenditure
-    if (nrow(graph_data_exp) > 0) {
-      graph_exp <- ggplot(graph_data_exp, aes(x = year, y = value, color = country_name)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        labs(
-          title = "Wage Bill as % of Public Expenditure Over Time", 
-          x = "Year", y = "Wage Bill (% of Public Expenditure)", color = "Country"
-        ) +
-        theme_minimal()
-      
-      img_path_exp <- tempfile(fileext = ".png")
-      ggsave(img_path_exp, plot = graph_exp, width = 8, height = 6, dpi = 300)
-      
-      ppt <- ppt %>%
-        add_slide(layout = "Title and Content", master = "Office Theme") %>%
-        ph_with(external_img(img_path_exp, height = 5, width = 7), location = ph_location_type(type = "body"))
-    }
-    
-    return(ppt)
-  }
   
   output$dl_csv_wagebill <- downloadHandler(
-    filename = function() {
-      type <- if (input$graph_choice == "GDP") "gdp" else "publicexp"
-      paste0("wagebill_", type, "_", paste(input$countries, collapse = "-"), ".csv")
-    },
-    content = function(file) {
-      d <- selected_data() %>% arrange(country_name, year)
-      validate(need(nrow(d) > 0, "No data to download"))
-      readr::write_csv(d, file)
-    }
+    filename = function() paste0("wagebill_",ifelse(input$graph_choice=="GDP","gdp","publicexp"),"_",Sys.Date(),".csv"),
+    content  = function(file) { d <- selected_data(); validate(need(nrow(d)>0,"No data")); readr::write_csv(d,file) }
   )
   
+  # ── GDP DOT PLOT ─────────────────────────────────────────────────────────────
+  # KEY CHANGE: merged_data uses the latest obs per country, which is correct
+  # for a cross-country scatter — no change needed here.
   
   output$dot_plot_gdp <- renderPlotly({
     req(input$countries_gdp)
-    
-    d <- merged_data %>%
-      dplyr::filter(country_name %in% input$countries_gdp)
-    
-    if (nrow(d) == 0) {
-      return(plotly::plotly_empty(type = "scatter", mode = "markers") %>%
-               plotly::layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper", yref = "paper", showarrow = FALSE,
-                   font = list(size = 16), x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white", paper_bgcolor = "white"
-               ))
-    }
-    
-    first_sel <- input$countries_gdp[1]
-    d <- d %>% dplyr::mutate(color = ifelse(country_name == first_sel, "#B3242B", "#003366"))
-    
-    # Choose label column safely (Region if present & selected, else Country)
-    region_col <- intersect(c("region","region_name","Region"), names(d))[1]
-    label_vec  <- if (!is.na(region_col) && identical(input$label_type, "Region")) d[[region_col]] else d$country_name
-    
-    m    <- lm(indicator_value ~ log_gdp, data = d)
-    pred <- predict(m, newdata = d)
-    
-    plotly::plot_ly(d,
-                    x = ~log_gdp, y = ~indicator_value,
-                    type = "scatter", mode = "markers+text",
-                    text = label_vec, textposition = "top center",
-                    marker = list(size = 10, color = ~color, opacity = 0.7)) %>%
-      plotly::add_trace(x = d$log_gdp, y = pred, inherit = FALSE,
-                        type = "scatter", mode = "lines",
-                        line = list(color = "gray", dash = "dash"),
-                        showlegend = FALSE) %>%
-      plotly::layout(
-        title = "Wage Bill vs. Log(GDP per Capita)",
-        xaxis = list(title = "Log(GDP per Capita, 2015)"),
-        yaxis = list(title = "Wage Bill"),
-        showlegend = FALSE,
-        plot_bgcolor = "white", paper_bgcolor = "white"
-      )
+    d <- merged_data %>% dplyr::filter(country_name %in% input$countries_gdp)
+    if (nrow(d)==0) return(plotly_empty(type="scatter",mode="markers") %>% layout(title="No data available"))
+    first_sel  <- input$countries_gdp[1]
+    d <- d %>% mutate(color=ifelse(country_name==first_sel,"#B3242B","#003366"))
+    region_col <- intersect(c("region","region_name","Region"),names(d))[1]
+    label_vec  <- if (!is.na(region_col) && identical(input$label_type,"Region")) d[[region_col]] else d$country_name
+    m    <- lm(indicator_value~log_gdp, data=d)
+    pred <- predict(m, newdata=d)
+    plot_ly(d, x=~log_gdp, y=~indicator_value, type="scatter", mode="markers+text",
+            text=label_vec, textposition="top center",
+            marker=list(size=10,color=~color,opacity=0.7)) %>%
+      add_trace(x=d$log_gdp, y=pred, inherit=FALSE, type="scatter", mode="lines",
+                line=list(color="gray",dash="dash"), showlegend=FALSE) %>%
+      layout(title="Wage Bill vs. Log(GDP per Capita)", xaxis=list(title="Log(GDP per Capita, 2015)"),
+             yaxis=list(title="Wage Bill"), showlegend=FALSE, plot_bgcolor="white", paper_bgcolor="white")
   })
   
-  output$downloadGDPDoc <- downloadHandler(
-    filename = function() paste0("Wage_Bill_vs_GDP_Report_", Sys.Date(), ".docx"),
-    content = function(file) {
-      req(input$countries_gdp)
-      
-      filtered_data_df <- merged_data %>%
-        dplyr::filter(country_name %in% input$countries_gdp)
-      req(nrow(filtered_data_df) > 0)
-      
-      first_sel    <- input$countries_gdp[1]
-      report_title <- paste("Wage Bill vs. GDP Analysis Report –", first_sel)
-      
-      # choose label (Region if selected & available, else Country)
-      region_col <- intersect(c("region","region_name","Region"), names(filtered_data_df))[1]
-      label_vec  <- if (!is.na(region_col) && identical(input$label_type, "Region")) {
-        filtered_data_df[[region_col]]
-      } else {
-        filtered_data_df$country_name
-      }
-      
-      # build doc
-      doc <- officer::read_docx()
-      doc <- doc |>
-        officer::body_add_par(report_title, style = "heading 1") |>
-        officer::body_add_par("Introduction", style = "heading 2") |>
-        officer::body_add_par(
-          "This section shows the relationship between the wage bill (expressed as a share of total expenditure) and the income level of countries. It offers a clearer understanding of whether wage bill spending is consistent with countries’ respective income levels.",
-          style = "Normal"
-        ) |>
-        officer::body_add_par("Macro Fundamentals of the Public Sector", style = "heading 2") |>
-        officer::body_add_par("", style = "Normal")
-      
-      # data for plot (first selection red, others blue)
-      d_plot <- filtered_data_df |>
-        dplyr::mutate(
-          highlight = ifelse(country_name == first_sel, "Selected country", "Other countries"),
-          label = label_vec
-        )
-      
-      # plot — labels black, NO LEGEND
-      p <- ggplot2::ggplot(d_plot, ggplot2::aes(x = log_gdp, y = indicator_value)) +
-        ggplot2::geom_point(ggplot2::aes(color = highlight), size = 3, alpha = 0.9, show.legend = FALSE) +
-        ggrepel::geom_text_repel(
-          ggplot2::aes(label = label),
-          color = "black", size = 3, max.overlaps = 30, box.padding = 0.4, point.padding = 0.5,
-          show.legend = FALSE
-        ) +
-        ggplot2::geom_smooth(method = "lm", color = "gray50", linetype = "dashed", se = FALSE) +
-        ggplot2::scale_color_manual(
-          values = c("Selected country" = "#B3242B", "Other countries" = "#003366"),
-          guide = "none"                                  # <- hide legend
-        ) +
-        ggplot2::labs(
-          title = "Wage Bill vs. Log(GDP per Capita)",
-          x = "Log(GDP per Capita, 2015)",
-          y = "Wage Bill (% of Public Expenditure)"
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::coord_cartesian(clip = "off") +
-        ggplot2::theme(
-          legend.position = "none",                        # <- extra safeguard
-          plot.margin = ggplot2::margin(10, 40, 10, 10)
-        )
-      
-      doc <- doc |>
-        officer::body_add_gg(value = p, width = 6.5, height = 4.5) |>
-        officer::body_add_par(
-          "Note: This graph shows the relationship between the wage bill (expressed as a share of total expenditure) and the income level of countries. It offers a clearer understanding of whether wage bill spending is consistent with countries’ respective income levels.The indicator shows the last year available for each selected country/region/income group(s).",
-          style = "Normal"
-        )
-      
-      print(doc, target = file)
-    }
-  )
+  output$note_dotplot_gdp <- renderText({
+    "Note: Relationship between wage bill (share of total expenditure) and income level. Shows last year available per country."
+  })
   
-  generate_gdp_analysis_section <- function(doc, selected_countries) {
-    filtered_data_df <- merged_data %>% dplyr::filter(country_name %in% selected_countries)
-    if (nrow(filtered_data_df) == 0) {
-      return(doc %>% officer::body_add_par("No data available for Wage Bill vs. GDP analysis.", style = "Normal"))
-    }
-    
-    first_country <- selected_countries[1]
-    
-    country_summary <- filtered_data_df %>%
-      dplyr::group_by(country_name) %>%
-      dplyr::summarise(
-        wage_bill = round(mean(indicator_value, na.rm = TRUE), 0),
-        gdp_per_capita = round(exp(mean(log_gdp, na.rm = TRUE)), 0),
-        .groups = "drop"
-      )
-    
-    first_country_values <- country_summary %>% dplyr::filter(country_name == first_country)
-    first_country_wage_bill <- if (nrow(first_country_values) == 0) NA_real_ else first_country_values$wage_bill
-    first_country_gdp <- if (nrow(first_country_values) == 0) NA_real_ else first_country_values$gdp_per_capita
-    
-    regional_avg <- filtered_data_df %>%
-      dplyr::summarise(
-        avg_wage_bill = round(mean(indicator_value, na.rm = TRUE), 0),
-        avg_gdp_per_capita = round(exp(mean(log_gdp, na.rm = TRUE)), 0)
-      )
-    
-    interpretation_text <- paste0(
-      "Figure 1.3 illustrates the relationship between the wage bill as a percentage of public expenditure ",
-      "and GDP per capita across selected countries. The selected countries have an average wage bill of ",
-      regional_avg$avg_wage_bill, "%, with a GDP per capita of $",
-      format(regional_avg$avg_gdp_per_capita, big.mark = ","), ".\n\n",
-      "For ", first_country, ", the wage bill represents ", first_country_wage_bill,
-      "% of public expenditure, with a GDP per capita of $",
-      format(first_country_gdp, big.mark = ","), "."
-    )
-    
-    p <- ggplot2::ggplot(filtered_data_df, ggplot2::aes(x = log_gdp, y = indicator_value, color = country_name)) +
-      ggplot2::geom_point(size = 3) +
-      ggplot2::geom_smooth(method = "lm", color = "gray50", linetype = "dashed", se = FALSE) +
-      ggplot2::labs(
-        title = "Wage Bill vs. Log(GDP per Capita)",
-        x = "Log(GDP per Capita, 2015)",
-        y = "Wage Bill (% of Public Expenditure)",
-        color = "Country"
-      ) +
-      ggplot2::theme_minimal() +
-      ggplot2::scale_color_manual(values = scales::hue_pal()(length(unique(filtered_data_df$country_name))))
-    
-    img_path <- tempfile(fileext = ".png")
-    ggplot2::ggsave(filename = img_path, plot = p, width = 8, height = 6, dpi = 300)
-    
-    doc %>%
-      officer::body_add_par("Wage bill (% of public expenditure) and GDP per capita in the region", style = "heading 2") %>%
-      officer::body_add_par("This note presents evidence on public sector employment and compensation practices in relation to GDP per capita.", style = "Normal") %>%
-      officer::body_add_img(src = img_path, width = 6, height = 4) %>%
-      officer::body_add_par(
-        "Note: This graph shows the relationship between the wage bill (expressed as a share of total expenditure) and the income level of countries. It offers a clearer understanding of whether wage bill spending is consistent with countries’ respective income levels.",
-        style = "Normal"
-      ) %>%
-      officer::body_add_par(interpretation_text, style = "Normal")
-  }
-  
-  #Slides
-  
-  generate_gdp_analysis_slide <- function(ppt, selected_countries) {
-    # Validate input
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter data
-    filtered_data_df <- merged_data %>% filter(country_name %in% selected_countries)
-    
-    if (nrow(filtered_data_df) == 0) {
-      return(ppt)
-    }
-    
-    # Plot
-    plot <- ggplot(filtered_data_df, aes(x = log_gdp, y = indicator_value, color = country_name)) +
-      geom_point(size = 3) +
-      geom_smooth(method = "lm", color = "gray", linetype = "dashed") +
-      labs(
-        title = "Wage Bill vs. Log(GDP per Capita)", 
-        x = "Log(GDP per Capita, 2015)", 
-        y = "Wage Bill (% of Public Expenditure)",
-        color = "Country"
-      ) +
-      theme_minimal() +
-      scale_color_manual(values = scales::hue_pal()(length(unique(filtered_data_df$country_name))))
-    
-    # Save plot to image
-    img_path <- tempfile(fileext = ".png")
-    ggsave(filename = img_path, plot = plot, width = 8, height = 6, dpi = 300)
-    
-    # Add slide with image only
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
   dot_data_gdp <- reactive({
     req(input$countries_gdp)
-    d <- merged_data %>%
-      dplyr::filter(country_name %in% input$countries_gdp)
-    
-    req(nrow(d) > 0)
-    
-    # pick a region column if it exists
-    region_col <- intersect(c("region","region_name","wb_region","Region"), names(d))[1]
-    
-    d %>%
-      dplyr::mutate(
-        label = if (!is.na(region_col) && identical(input$label_type, "Region"))
-          .data[[region_col]] else country_name
-      ) %>%
-      # keep only the columns that exist in your data
-      dplyr::select(dplyr::any_of(c("country_name", "label", "year",
-                                    "indicator_value", "log_gdp")))
+    merged_data %>% dplyr::filter(country_name %in% input$countries_gdp) %>%
+      dplyr::mutate(label=country_name) %>%
+      dplyr::select(dplyr::any_of(c("country_name","label","year","indicator_value","log_gdp")))
   })
   
   output$dl_csv_gdp <- downloadHandler(
-    filename = function() {
-      who <- if (length(input$countries_gdp)) paste(input$countries_gdp, collapse = "-") else "all"
-      paste0("wagebill_vs_gdp_", who, "_", Sys.Date(), ".csv")
-    },
-    content = function(file) {
-      d <- dot_data_gdp()
-      req(nrow(d) > 0)
-      utils::write.csv(d, file, row.names = FALSE)
-    },
-    contentType = "text/csv"     # avoids “.htm” save dialog
+    filename = function() paste0("wagebill_vs_gdp_",Sys.Date(),".csv"),
+    content  = function(file) { d <- dot_data_gdp(); req(nrow(d)>0); utils::write.csv(d,file,row.names=FALSE) }
   )
   
-  output$note_dotplot_gdp <- renderText({
-    "Note: This graph shows the relationship between the wage bill (expressed as a share of total expenditure) and the income level of countries. It offers a clearer understanding of whether wage bill spending is consistent with countries’ respective income levels. The indicator shows the last year available for each selected country/region/income group(s)."
-  })
-  #Employment distribution
+  # ── WAGE PREMIUM (cross-country dot plot) ────────────────────────────────────
+  # KEY CHANGE: public_wage_premium already has latest obs per country from the
+  # processing script — this cross-country chart is correct as-is.
   
+  output$dotPlot <- renderPlotly({
+    req(input$countries_wage_premium)
+    filtered_data <- public_wage_premium %>%
+      dplyr::filter(country_name %in% input$countries_wage_premium) %>%
+      dplyr::select(country_name, value_percentage, year) %>%
+      tidyr::drop_na(value_percentage) %>%
+      dplyr::mutate(color=ifelse(country_name==input$countries_wage_premium[1],"#B3242B","#003366"))
+    if (nrow(filtered_data)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
+    plot_ly(data=filtered_data, x=~country_name, y=~value_percentage, type="scatter", mode="markers",
+            marker=list(size=10,opacity=0.8,color=~color),
+            text=~paste("Country:",country_name,"<br>Value:",round(value_percentage,1),"%","<br>Year:",year)) %>%
+      layout(title="Public Sector Wage Premium by Country", xaxis=list(title="Country"),
+             yaxis=list(title="Wage Premium (%)"), showlegend=FALSE)
+  })
+  
+  output$note_wage_premium <- renderText({
+    "Note: Estimated public sector wage premium compared to private sector, controlling for gender, education, tenure, and location. Shows last year available."
+  })
+  
+  output$dl_csv_wage_premium <- downloadHandler(
+    filename = function() paste0("public_sector_wage_premium_",Sys.Date(),".csv"),
+    content  = function(file) {
+      req(input$countries_wage_premium)
+      df <- public_wage_premium %>% dplyr::filter(country_name %in% input$countries_wage_premium) %>%
+        dplyr::select(country_name,year,value_percentage) %>% tidyr::drop_na(value_percentage)
+      utils::write.csv(df,file,row.names=FALSE,na="")
+    }
+  )
+  
+  # ── EMPLOYMENT DISTRIBUTION ──────────────────────────────────────────────────
   filtered_workforce_data <- reactive({
     req(input$countries_workforce)
-    public_sector_workforce_clean %>% group_by(country_name, indicator_name) %>% slice_max(order_by = year, n = 1) %>% ungroup()
+    public_sector_workforce_clean %>%
+      group_by(country_name,indicator_name) %>% slice_max(order_by=year,n=1) %>% ungroup()
   })
   
   output$stackedBarGraph <- renderPlotly({
     req(input$countries_workforce)
-    
-    data_to_plot <- filtered_workforce_data() %>% 
-      filter(country_name %in% input$countries_workforce)
-    
-    if (nrow(data_to_plot) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Define color-blind friendly palette (Okabe-Ito)
-    color_blind_palette <- c(
-      "Public Administration" = "#E69F00",  # orange
-      "Education" = "#56B4E9",              # sky blue
-      "Health" = "#009E73",                 # bluish green
-      "Other" = "#F0E442"                   # yellow
-    )
-    
-    # Create stacked bar chart
-    plot_ly(data = data_to_plot,
-            x = ~country_name,
-            y = ~value_percentage,
-            color = ~indicator_name,
-            type = "bar",
-            text = ~paste("Country:", country_name,
-                          "Indicator:", indicator_name,
-                          "Value:", round(value_percentage, 1), "%",
-                          "Year:", year),
-            textposition = "auto",
-            colors = color_blind_palette) %>%
-      layout(
-        barmode = "stack",
-        title = "Public Workforce Distribution by Country",
-        xaxis = list(title = "Country"),
-        yaxis = list(title = "Workforce Distribution (%)", range = c(0, 100)),
-        legend = list(title = list(text = "<b>Indicator</b>"))
-      )
+    data_to_plot <- filtered_workforce_data() %>% filter(country_name %in% input$countries_workforce)
+    if (nrow(data_to_plot)==0) return(plotly_empty(type="bar") %>% layout(title="No data available"))
+    color_blind_palette <- c("Public Administration"="#E69F00","Education"="#56B4E9","Health"="#009E73","Other"="#F0E442")
+    plot_ly(data=data_to_plot, x=~country_name, y=~value_percentage, color=~indicator_name, type="bar",
+            text=~paste("Country:",country_name,"Indicator:",indicator_name,"Value:",round(value_percentage,1),"%"),
+            textposition="auto", colors=color_blind_palette) %>%
+      layout(barmode="stack", title="Public Workforce Distribution by Country",
+             xaxis=list(title="Country"), yaxis=list(title="Workforce Distribution (%)",range=c(0,100)))
   })
   
   output$note_stackedBarGraph <- renderText({
-    "Note: This indicator represents the distribution of public sector employment across different industries (Public Administration, Education, Health, and Other) as a percentage of paid public employment. The indicator shows the last year available for each selected country/region/income group(s)."
-  })
-  output$messageOutput <- renderText({
-    filtered_data <- public_sector_workforce %>% filter(country_name == input$selected_country)
-    if(nrow(filtered_data) < 2) {
-      return(tags$p("Not enough data available for this country to create the graph.", style = "color: red; font-weight: bold;"))
-    }
-    return(NULL)
+    "Note: Distribution of public sector employment across industries as a percentage of paid public employment. Shows last year available."
   })
   
   output$horizontalStackedBar <- renderPlotly({
     req(input$selected_country)
-    filtered_data <- public_sector_workforce %>% filter(country_name == input$selected_country)
-    if(nrow(filtered_data) == 0) return(NULL)
-    first_year <- min(filtered_data$year, na.rm = TRUE)
-    last_year <- max(filtered_data$year, na.rm = TRUE)
-    if(is.infinite(first_year) || is.infinite(last_year)) return(NULL)
-    data_to_plot <- filtered_data %>% filter(year %in% c(first_year, last_year)) %>% 
-      group_by(year, indicator_name) %>% summarise(value_percentage = mean(value_percentage, na.rm = TRUE), .groups = "drop")
-    # Color-blind friendly palette (Okabe-Ito)
-    color_blind_palette <- c(
-      "Public Administration" = "#E69F00",  # orange
-      "Education" = "#56B4E9",              # sky blue
-      "Health" = "#009E73",                 # bluish green
-      "Other" = "#F0E442"                   # yellow
-    )
-    
-    plot_ly(data = data_to_plot,
-            x = ~value_percentage,
-            y = ~factor(year, levels = c(last_year, first_year)),
-            color = ~indicator_name,
-            type = "bar",
-            orientation = "h",
-            text = ~paste0(round(value_percentage, 1), "%"),
-            textposition = "inside",
-            colors = color_blind_palette) %>%
-      layout(barmode = "stack",
-             title = paste("Sectoral Distribution of Public Sector Workforce in", input$selected_country, "(", first_year, "&", last_year, ")"),
-             xaxis = list(title = "Percentage (%)"),
-             yaxis = list(title = "Year"),
-             legend = list(title = list(text = "Sector")))
+    filtered_data <- public_sector_workforce %>% filter(country_name==input$selected_country)
+    if (nrow(filtered_data)==0) return(NULL)
+    first_year <- min(filtered_data$year,na.rm=TRUE); last_year <- max(filtered_data$year,na.rm=TRUE)
+    if (is.infinite(first_year)||is.infinite(last_year)) return(NULL)
+    data_to_plot <- filtered_data %>% filter(year %in% c(first_year,last_year)) %>%
+      group_by(year,indicator_name) %>% summarise(value_percentage=mean(value_percentage,na.rm=TRUE),.groups="drop")
+    color_blind_palette <- c("Public Administration"="#E69F00","Education"="#56B4E9","Health"="#009E73","Other"="#F0E442")
+    plot_ly(data=data_to_plot, x=~value_percentage, y=~factor(year,levels=c(last_year,first_year)),
+            color=~indicator_name, type="bar", orientation="h",
+            text=~paste0(round(value_percentage,1),"%"), textposition="inside", colors=color_blind_palette) %>%
+      layout(barmode="stack",
+             title=paste("Sectoral Distribution of Public Sector Workforce in",input$selected_country,"(",first_year,"&",last_year,")"),
+             xaxis=list(title="Percentage (%)"), yaxis=list(title="Year"))
   })
+  
   output$note_horizontalStackedBar <- renderText({
-    paste0("Note: This indicator represents the distribution of the public sector workforce across different industries in ", 
-           input$selected_country, 
-           " for the earliest and latest available years in the dataset. It highlights the changes in sectoral employment over time.")
+    paste0("Note: Distribution of the public sector workforce in ",input$selected_country," for earliest and latest available years.")
   })
-  
-  output$downloadGraphsemploymentdist <- downloadHandler(
-    filename = function() paste0("Employment_Distribution_Analysis_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      
-      # ---- Build the dynamic title (first selected country as reference) ----
-      ref_country <- if (!is.null(input$countries_workforce) &&
-                         length(input$countries_workforce) > 0) {
-        input$countries_workforce[[1]]
-      } else {
-        "Selected Countries"
-      }
-      report_title <- paste0("Employment Distribution Analysis – ", ref_country)
-      
-      # ---- Create the Word doc and add title + intro sections ----
-      title_style <- fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- read_docx()
-      
-      # Styled title line
-      doc <- doc %>%
-        body_add_fpar(fpar(ftext(report_title, prop = title_style))) %>%
-        body_add_par("", style = "Normal") %>%  # spacer
-        body_add_par("Introduction", style = "heading 2") %>%
-        body_add_par(
-          "This section shows the employment distribution of countries.",
-          style = "Normal"
-        ) %>%
-        body_add_par("Size and Characteristics of the public sector", style = "heading 2") %>%
-        body_add_par("", style = "Normal")  # spacer before first graph
-      
-      # =========================
-      # First graph: multi-country
-      # =========================
-      first_graph_data <- filtered_workforce_data() %>%
-        dplyr::filter(country_name %in% input$countries_workforce)
-      
-      if (nrow(first_graph_data) > 0) {
-        p1 <- ggplot(first_graph_data,
-                     aes(x = country_name, y = value_percentage, fill = indicator_name)) +
-          geom_bar(stat = "identity", position = "stack") +
-          scale_fill_viridis_d(option = "D") +
-          labs(
-            title = "Employment distribution by country",
-            x = "Country",
-            y = "Employment distribution (%)",
-            fill = "Sector"
-          ) +
-          theme_minimal()
-        
-        img1 <- tempfile("first_graph_", fileext = ".png")
-        ggsave(img1, plot = p1, width = 6, height = 4, dpi = 300)
-        
-        doc <- doc %>%
-          body_add_par("First Graph: Public Workforce Distribution by Country", style = "heading 1") %>%
-          body_add_img(src = img1, width = 6, height = 4) %>%
-          body_add_par(
-            "This graph shows the public workforce distribution across multiple countries.",
-            style = "Normal"
-          )
-      } else {
-        doc <- doc %>%
-          body_add_par("No data available for the selected countries.", style = "Normal")
-      }
-      
-      # =========================
-      # Second graph: single country (first vs last year)
-      # =========================
-      filtered_data <- public_sector_workforce %>%
-        dplyr::filter(country_name == input$selected_country)
-      
-      if (nrow(filtered_data) >= 2) {
-        # ensure year is numeric/integer for min/max
-        # (skip if already numeric)
-        if (!is.numeric(filtered_data$year)) {
-          suppressWarnings({
-            filtered_data$year <- as.integer(filtered_data$year)
-          })
-        }
-        
-        first_year <- suppressWarnings(min(filtered_data$year, na.rm = TRUE))
-        last_year  <- suppressWarnings(max(filtered_data$year, na.rm = TRUE))
-        
-        if (is.finite(first_year) && is.finite(last_year)) {
-          
-          # Build second_graph_data (only first & last year)
-          second_graph_data <- filtered_data %>%
-            dplyr::filter(year %in% c(first_year, last_year)) %>%
-            dplyr::group_by(year, indicator_name) %>%
-            dplyr::summarise(
-              value_percentage = sum(value_percentage, na.rm = TRUE),
-              .groups = "drop"
-            )
-          
-          if (nrow(second_graph_data) > 0) {
-            p2 <- ggplot(second_graph_data,
-                         aes(x = value_percentage,
-                             y = factor(year, levels = c(last_year, first_year)),
-                             fill = indicator_name)) +
-              geom_bar(stat = "identity", position = "stack") +
-              coord_flip() +
-              scale_fill_viridis_d(option = "D") +
-              labs(
-                title = paste("Sectoral distribution of employment in", input$selected_country),
-                x = "Percentage (%)",
-                y = "Year",
-                fill = "Sector"
-              ) +
-              theme_minimal()
-            
-            img2 <- tempfile("second_graph_", fileext = ".png")
-            ggsave(img2, plot = p2, width = 6, height = 4, dpi = 300)
-            
-            doc <- doc %>%
-              body_add_par("Second Graph: Employment Distribution", style = "heading 1") %>%
-              body_add_img(src = img2, width = 6, height = 4) %>%
-              body_add_par(
-                "This graph shows the sectoral distribution of public sector workforce for the selected country.",
-                style = "Normal"
-              )
-          } else {
-            doc <- doc %>%
-              body_add_par("No sectoral data found for the selected years.", style = "Normal")
-          }
-        } else {
-          doc <- doc %>%
-            body_add_par("Invalid year data for the selected country.", style = "Normal")
-        }
-      } else {
-        doc <- doc %>%
-          body_add_par("Not enough data available for the selected country to create the second graph.", style = "Normal")
-      }
-      
-      # ---- Write the file ----
-      print(doc, target = file)
-    }
-  )
-  generate_public_sector_workforce_section <- function(doc, selected_countries) {
-    doc <- doc %>% body_add_par("Employment Distribution Analysis", style = "heading 1")
-    
-    doc <- doc %>% body_add_par(
-      "This section presents an analysis of public workforce distribution across different sectors and countries.", 
-      style = "Normal"
-    )
-    
-    # ✅ Validate selected countries
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    first_country <- selected_countries[1]
-    
-    # ✅ Filter data
-    first_graph_data <- public_sector_workforce %>% 
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(first_graph_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for Public Workforce Distribution by Country.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Plot graph
-    first_graph_ggplot <- ggplot(first_graph_data, aes(x = country_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "stack") +
-      scale_fill_viridis_d(option = "D") +  # Automatically assigns different accessible colors
-      labs(
-        title = "Public Workforce Distribution by Country", 
-        x = "Country", y = "Workforce Distribution (%)", fill = "Sector"
-      ) +
-      theme_minimal()
-    
-    img_path1 <- tempfile(fileext = ".png")
-    ggsave(img_path1, plot = first_graph_ggplot, width = 8, height = 4)
-    
-    # ✅ Sector distribution for first country
-    sector_distribution <- public_sector_workforce %>%
-      filter(country_name == first_country) %>%
-      group_by(indicator_name) %>%
-      summarise(share = mean(value_percentage, na.rm = TRUE), .groups = "drop") %>%
-      pivot_wider(names_from = indicator_name, values_from = share, values_fill = list(share = 0))
-    
-    # ✅ Sector averages for other countries
-    comparison_distribution <- public_sector_workforce %>%
-      filter(country_name %in% selected_countries & country_name != first_country) %>%
-      group_by(indicator_name) %>%
-      summarise(avg_share = mean(value_percentage, na.rm = TRUE), .groups = "drop") %>%
-      pivot_wider(names_from = indicator_name, values_from = avg_share, values_fill = list(avg_share = 0))
-    
-    # ✅ Extract values
-    `%||%` <- function(x, y) ifelse(is.null(x) || is.na(x), y, x)
-    public_admin_share <- sector_distribution$`Public Administration` %||% 0
-    education_share <- sector_distribution$Education %||% 0
-    health_share <- sector_distribution$Health %||% 0
-    
-    comparison_education_share <- comparison_distribution$Education %||% 0
-    comparison_health_share <- comparison_distribution$Health %||% 0
-    
-    # ✅ Check for missing values
-    if (public_admin_share == 0 && education_share == 0 && health_share == 0) {
-      doc <- doc %>% body_add_par(
-        paste0("No public sector employment data available for ", first_country, "."),
-        style = "Normal"
-      )
-      return(doc)
-    }
-    
-    # ✅ Largest sector logic
-    sector_shares <- c(public_admin_share, education_share, health_share)
-    sector_names <- c("Public Administration", "Education", "Health")
-    largest_sector <- sector_names[which.max(sector_shares)]
-    largest_sector_share <- max(sector_shares)
-    
-    # ✅ Comparison texts
-    education_comparison <- if (education_share > comparison_education_share) {
-      paste0("This is higher than the average of ", round(comparison_education_share, 1), "% among the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", round(comparison_education_share, 1), "% among the other selected countries.")
-    }
-    
-    health_comparison <- if (health_share > comparison_health_share) {
-      paste0("The health sector, while representing a smaller segment at ", 
-             round(health_share, 1), "%, still surpasses the average of ", 
-             round(comparison_health_share, 1), "% in other selected countries.")
-    } else {
-      paste0("The health sector accounts for ", round(health_share, 1), "%, aligning closely with the average of ", 
-             round(comparison_health_share, 1), "% in other selected countries.")
-    }
-    
-    # ✅ Interpretation
-    sector_interpretation_text <- paste0(
-      first_country, " has the highest proportion of public sector employees in ", largest_sector,
-      ", with ", round(largest_sector_share, 1), "% of paid public sector workers employed in this area. ",
-      "The education sector represents ", round(education_share, 1), "% of the workforce. ", education_comparison, " ",
-      "The health sector accounts for ", round(health_share, 1), "%, ", health_comparison
-    )
-    
-    # ✅ Add to document
-    doc <- doc %>% 
-      body_add_par("Public Workforce Distribution by Country", style = "heading 2") %>% 
-      body_add_img(src = img_path1, width = 6, height = 4) %>% 
-      body_add_par(sector_interpretation_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Slides
-  
-  generate_public_sector_workforce_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter data
-    first_graph_data <- public_sector_workforce %>% 
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(first_graph_data) == 0) {
-      return(ppt)
-    }
-    
-    # Create the bar plot
-    first_graph_ggplot <- ggplot(first_graph_data, aes(x = country_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "stack") +
-      scale_fill_viridis_d(option = "D") +  # Automatically assigns different accessible colors
-      labs(
-        title = "Public Workforce Distribution by Country", 
-        x = "Country", y = "Workforce Distribution (%)", fill = "Sector"
-      ) +
-      theme_minimal()
-    
-    # Save to PNG
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = first_graph_ggplot, width = 8, height = 4)
-    
-    # Add slide to ppt
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  
-  #Download cvs 
-  
-  # Keep the ID EXACTLY as requested
   
   output$dl_csv_public_workforce <- downloadHandler(
-    filename = function() paste0("public_workforce_data_", Sys.Date(), ".csv"),
+    filename = function() paste0("public_workforce_data_",Sys.Date(),".csv"),
     content  = function(file) {
       req(input$countries_workforce)
-      
-      df <- public_sector_workforce %>%
-        dplyr::filter(.data$country_name %in% input$countries_workforce) %>%
-        dplyr::select(.data$country_name, .data$year, .data$indicator_name, .data$value_percentage) %>%
-        tidyr::drop_na(.data$value_percentage) %>%
-        dplyr::mutate(
-          highlighted = .data$country_name == input$countries_workforce[1],  # match plot highlight
-          color_hex   = ifelse(.data$highlighted, "#B3242B", "#003366")
-        ) %>%
-        dplyr::arrange(.data$country_name, .data$indicator_name, .data$year)
-      
-      utils::write.csv(df, file, row.names = FALSE, na = "")
+      df <- public_sector_workforce %>% dplyr::filter(country_name %in% input$countries_workforce) %>%
+        dplyr::select(country_name,year,indicator_name,value_percentage) %>% tidyr::drop_na(value_percentage)
+      utils::write.csv(df,file,row.names=FALSE,na="")
     }
   )
+  outputOptions(output,"dl_csv_public_workforce",suspendWhenHidden=FALSE)
   
-  # keep it active even if the button is hidden (optional)
-  outputOptions(output, "dl_csv_public_workforce", suspendWhenHidden = FALSE)
-  
-  #Tertiary education
-  
+  # ── TERTIARY EDUCATION ───────────────────────────────────────────────────────
   output$barPlot <- renderPlotly({
     req(input$selected_countries)
-    
-    # Filter Data
-    filtered_data <- tertiary_education %>% 
-      filter(country_name %in% input$selected_countries)
-    
-    # Check if filtered data is empty
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Define Colors
-    custom_colors <- c("as a share of private paid employees" = "#0072B2", 
-                       "as a share of public paid employees" = "#D55E00")
-    
-    # Generate Bar Plot
-    plot <- filtered_data %>%
-      plot_ly(x = ~country_name, y = ~value_percentage, 
-              color = ~indicator_name, colors = custom_colors, 
-              type = 'bar', barmode = 'group',
-              text = ~paste("Country:", country_name,
-                            "Indicator:", indicator_name,
-                            "Value:", round(value_percentage, 1), "%",
-                            "Year:", year),
-              textposition = "auto") %>%
-      layout(
-        title = "Workers with Tertiary Education by Sector and Country",
-        xaxis = list(title = "Country"),
-        yaxis = list(title = "Tertiary Education (%)"),
-        legend = list(title = list(text = "<b>Sector</b>"))
-      )
-    
-    plot
+    filtered_data <- tertiary_education %>% filter(country_name %in% input$selected_countries)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="bar") %>% layout(title="No data available"))
+    custom_colors <- c("as a share of private paid employees"="#0072B2","as a share of public paid employees"="#D55E00")
+    filtered_data %>%
+      plot_ly(x=~country_name, y=~value_percentage, color=~indicator_name, colors=custom_colors,
+              type="bar", barmode="group",
+              text=~paste("Country:",country_name,"Indicator:",indicator_name,"Value:",round(value_percentage,1),"%","Year:",year),
+              textposition="auto") %>%
+      layout(title="Workers with Tertiary Education by Sector and Country",
+             xaxis=list(title="Country"), yaxis=list(title="Tertiary Education (%)"))
   })
   
   output$note_tertiaryEducation <- renderText({
-    "Note: This indicator represents the proportion of individuals with tertiary education in the public and private sectors across selected countries. It highlights differences in educational attainment among paid employees by sector.The indicator shows the last year available for each selected country/region/income group(s)."
+    "Note: Proportion of individuals with tertiary education in public and private sectors. Shows last year available."
   })
-  
-  output$downloadGraphsWordEducation <- downloadHandler(
-    filename = function() paste0("Workers_Tertiary_Education_Report_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      req(input$selected_countries)
-      
-      # ---- Filter data ----
-      filtered_df <- tertiary_education %>%
-        dplyr::filter(country_name %in% input$selected_countries)
-      req(nrow(filtered_df) > 0)
-      
-      # ---- Title text (first selected country) ----
-      first_sel    <- input$selected_countries[1]
-      report_title <- paste0("Tertiary Education Analysis – ", first_sel)
-      
-      # ---- Create the Word doc and add title + intro sections ----
-      title_style <- fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- read_docx()
-      
-      doc <- doc %>%
-        # Styled title (Officer fpar/ftext as you requested)
-        body_add_fpar(fpar(ftext(report_title, prop = title_style))) %>%
-        body_add_par("", style = "Normal") %>%  # spacer
-        body_add_par("Introduction", style = "heading 2") %>%
-        body_add_par(
-          "This section represents the proportion of individuals with tertiary education in the public and private sectors across selected countries.",
-          style = "Normal"
-        ) %>%
-        body_add_par("Size and Characteristics of the public sector", style = "heading 2") %>%
-        body_add_par("", style = "Normal")  # spacer before plot
-      
-      # ---- Choose data label (Region if selected & available, else Country) ----
-      region_col <- intersect(c("region", "region_name", "Region"), names(filtered_df))[1]
-      label_vec  <- if (!is.na(region_col) && identical(input$label_type_edu, "Region")) {
-        filtered_df[[region_col]]
-      } else {
-        filtered_df$country_name
-      }
-      
-      # ---- Plot (highlight first selection, no legend, black labels) ----
-      d_plot <- filtered_df %>%
-        dplyr::mutate(
-          highlight = ifelse(country_name == first_sel, "Selected country", "Other countries"),
-          label     = label_vec,
-          country_name = factor(
-            country_name,
-            levels = c(first_sel, sort(setdiff(unique(country_name), first_sel)))
-          )
-        )
-      
-      p <- ggplot(
-        d_plot,
-        aes(x = country_name, y = value_percentage, fill = indicator_name)
-      ) +
-        geom_col(                   # same as geom_bar(stat="identity")
-          position = position_dodge(width = 0.8),
-          width = 0.7
-        ) +
-        scale_fill_manual(
-          values = c(
-            "as a share of private paid employees" = "#0072B2",
-            "as a share of public paid employees"  = "#D55E00"
-          )                                    # <- keep legend visible
-        ) +
-        labs(
-          title = "Tertiary Education by Sector and Country",
-          x = "Country",
-          y = "Tertiary Education (%)",
-          fill = NULL
-        ) +
-        theme_minimal() +
-        theme(
-          legend.position = "right",
-          plot.margin = margin(10, 40, 10, 10)
-        )
-      
-      # ---- Add plot to Word + note ----
-      doc <- doc %>%
-        officer::body_add_gg(value = p, width = 6.5, height = 4.5) %>%
-        body_add_par(
-          "Note: This graph compares the share of workers with tertiary education in the public and private sectors across the selected countries. The first country you selected is highlighted.",
-          style = "Normal"
-        )
-      
-      # ---- Write the file ----
-      print(doc, target = file)
-    }
-  )
-  
-  
-  generate_tertiary_education_section <- function(doc, selected_countries) {
-    # Add Section Title and Introduction
-    doc <- doc %>%
-      body_add_par("Tertiary Education Analysis", style = "heading 1") %>%
-      body_add_par(
-        "This section presents an analysis of tertiary education among public and private sector employees across selected countries.", 
-        style = "Normal"
-      )
-    
-    # ✅ Ensure valid country selection
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Filter relevant data
-    filtered_data <- tertiary_education %>%
-      filter(country_name %in% selected_countries)
-    
-    # ✅ Handle empty data
-    if (nrow(filtered_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Create ggplot
-    ggplot_obj <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_manual(values = c(
-        "as a share of private paid employees" = "#0072B2", 
-        "as a share of public paid employees" = "#D55E00"
-      )) +
-      labs(
-        title = "Workers with Tertiary Education by Sector and Country",
-        x = "Country", y = "Tertiary Education (%)", fill = "Sector"
-      ) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    # ✅ Save image
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = ggplot_obj, width = 8, height = 6)
-    
-    # ✅ Summary statistics
-    avg_public <- round(mean(filtered_data$value_percentage[filtered_data$indicator_name == "as a share of public paid employees"], na.rm = TRUE), 1)
-    avg_private <- round(mean(filtered_data$value_percentage[filtered_data$indicator_name == "as a share of private paid employees"], na.rm = TRUE), 1)
-    
-    highest_public_country <- filtered_data %>%
-      filter(indicator_name == "as a share of public paid employees") %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>% first()
-    
-    lowest_public_country <- filtered_data %>%
-      filter(indicator_name == "as a share of public paid employees") %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>% first()
-    
-    highest_private_country <- filtered_data %>%
-      filter(indicator_name == "as a share of private paid employees") %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>% first()
-    
-    lowest_private_country <- filtered_data %>%
-      filter(indicator_name == "as a share of private paid employees") %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>% first()
-    
-    # ✅ Interpretation
-    interpretation_text <- paste0(
-      "This graph compares tertiary education attainment among employees in the public and private sectors across selected countries. ",
-      "On average, ", avg_public, "% of public sector employees have completed tertiary education, while in the private sector, the share is ", avg_private, "%. ",
-      "The country with the highest share of tertiary-educated public sector employees is ", highest_public_country, ", whereas ", lowest_public_country, " has the lowest proportion. ",
-      "In the private sector, ", highest_private_country, " has the highest tertiary education level among employees, while ", lowest_private_country, " has the lowest."
-    )
-    
-    # ✅ Add plot and interpretation to document
-    doc <- doc %>%
-      body_add_img(src = img_path, width = 6, height = 4) %>%
-      body_add_par("This graph shows the proportion of individuals with tertiary education working in public and private sector employment.", style = "Normal") %>%
-      body_add_par(interpretation_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Slides
-  
-  generate_tertiary_education_slide <- function(ppt, selected_countries) {
-    # ✅ Validate input
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # ✅ Filter relevant data
-    filtered_data <- tertiary_education %>%
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(filtered_data) == 0) {
-      return(ppt)
-    }
-    
-    # ✅ Create ggplot
-    plot <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_manual(values = c(
-        "as a share of private paid employees" = "#0072B2", 
-        "as a share of public paid employees" = "#D55E00"
-      )) +
-      labs(
-        title = "Workers with Tertiary Education by Sector and Country",
-        x = "Country", y = "Tertiary Education (%)", fill = "Sector"
-      ) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    # ✅ Save plot to image
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = plot, width = 8, height = 6)
-    
-    # ✅ Add slide with image only
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7),
-              location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  #Download cvs
   
   output$dl_csv_tertiary_edu <- downloadHandler(
-    filename = function() paste0("tertiary_education_", Sys.Date(), ".csv"),
+    filename = function() paste0("tertiary_education_",Sys.Date(),".csv"),
     content  = function(file) {
       req(input$selected_countries)
-      
-      out <- tertiary_education %>%
-        dplyr::filter(country_name %in% input$selected_countries) %>%
-        dplyr::select(country_name, year, indicator_name, value_percentage) %>%
-        dplyr::arrange(country_name, indicator_name, year)
-      
-      # write even if empty so the button still works
-      utils::write.csv(out, file, row.names = FALSE, na = "")
+      out <- tertiary_education %>% dplyr::filter(country_name %in% input$selected_countries) %>%
+        dplyr::select(country_name,year,indicator_name,value_percentage) %>% dplyr::arrange(country_name,indicator_name,year)
+      utils::write.csv(out,file,row.names=FALSE,na="")
     }
   )
   
-  
-  #Public Sector Wage Premium 
-  
-  # Render the Dot Plot for Public Sector Wage Premium
-  
-  output$dotPlot <- renderPlotly({
-    req(input$countries_wage_premium)
-    
-    filtered_data <- public_wage_premium %>%
-      dplyr::filter(country_name %in% input$countries_wage_premium) %>%
-      dplyr::select(country_name, value_percentage, year) %>%
-      tidyr::drop_na(value_percentage)
-    
-    if (nrow(filtered_data) == 0) {
-      return(plotly::plotly_empty(type = "scatter") %>%
-               plotly::layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper", yref = "paper", showarrow = FALSE,
-                   font = list(size = 16), x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white", paper_bgcolor = "white"
-               ))
-    }
-    
-    filtered_data <- filtered_data %>%
-      dplyr::mutate(color = ifelse(country_name == input$countries_wage_premium[1], "#B3242B", "#003366"))
-    
-    plotly::plot_ly(
-      data = filtered_data,
-      x = ~country_name, y = ~value_percentage,
-      type = "scatter", mode = "markers",
-      marker = list(size = 10, opacity = 0.8, color = ~color),
-      text = ~paste(
-        "Country:", country_name,
-        "Value:", round(value_percentage, 1), "%",
-        "<br>Year:", year
-      )
-    ) %>%
-      plotly::layout(
-        title = "Public Sector Wage Premium (Compared to All Private Employees) by Country",
-        xaxis = list(title = "Country"),
-        yaxis = list(title = "Public Sector Wage Premium (%)"),
-        showlegend = FALSE
-      )
-  })
-  
-  output$note_wage_premium <- renderText({
-    "Note: This visualization shows the estimated public sector wage premium, compared to private sector counterparts, after controlling for characteristics including gender, education, tenure, and geographic location.The indicator shows the last year available for each selected country/region/income group(s)."
-  })
-  
-  # Download the Report as a Word Document
-  output$downloadGraphswagepremiumbygender <- downloadHandler(
-    filename = function() paste0("Wage_Premium_Gender_Graphs_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      
-      # ---- Title anchor (pick something sensible) ----
-      first_sel <- if (!is.null(input$countries_first) && length(input$countries_first) > 0) {
-        input$countries_first[1]
-      } else if (isTruthy(input$country_second)) {
-        input$country_second
-      } else if (isTruthy(input$countries_wage_premium)) {
-        input$countries_wage_premium[1]
-      } else {
-        "Selected Country"
-      }
-      
-      report_title <- paste0("Public Sector Wage Premium by Gender — ", first_sel)
-      
-      # ---- Doc scaffolding ----
-      title_style <- officer::fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- officer::read_docx() %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext(report_title, prop = title_style))) %>%
-        officer::body_add_par("", style = "Normal") %>%
-        officer::body_add_par("Introduction", style = "heading 2") %>%
-        officer::body_add_par(
-          "This section presents the public sector wage premium—the percentage difference in wages between public sector workers and private sector employees—reported separately for men and women in the selected countries and over time for a selected country.",
-          style = "Normal"
-        ) %>%
-        officer::body_add_par("Equity in the Public Sector", style = "heading 2") %>%
-        officer::body_add_par("", style = "Normal")
-      
-      # === GRAPH 0: Cross-section (countries_wage_premium) ===
-      if (isTruthy(input$countries_wage_premium)) {
-        d0 <- public_wage_premium %>%
-          dplyr::filter(country_name %in% input$countries_wage_premium) %>%
-          dplyr::select(country_name, value_percentage, year) %>%
-          tidyr::drop_na(value_percentage)
-        
-        if (!is.numeric(d0$value_percentage)) {
-          suppressWarnings(d0$value_percentage <- as.numeric(d0$value_percentage))
-        }
-        
-        if (nrow(d0) > 0) {
-          d0 <- d0 %>%
-            dplyr::mutate(
-              highlight = ifelse(country_name == input$countries_wage_premium[1],
-                                 "Selected country", "Other countries"),
-              country_name = factor(
-                country_name,
-                levels = c(input$countries_wage_premium[1],
-                           sort(setdiff(unique(country_name), input$countries_wage_premium[1])))
-              )
-            )
-          
-          p0 <- ggplot2::ggplot(
-            d0, ggplot2::aes(x = country_name, y = value_percentage, color = highlight)
-          ) +
-            ggplot2::geom_point(size = 4.5, alpha = 0.95, show.legend = FALSE) +
-            ggplot2::scale_color_manual(values = c(
-              "Selected country" = "#B3242B",
-              "Other countries"  = "#003366"
-            )) +
-            ggplot2::labs(
-              title = "Public Sector Wage Premium (Compared to All Private Employees) by Country",
-              x = "Country", y = "Public Sector Wage Premium (%)"
-            ) +
-            ggplot2::theme_minimal() +
-            ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-          
-          doc <- doc %>%
-            officer::body_add_par("Public Sector Wage Premium (Cross-Section)", style = "heading 1") %>%
-            officer::body_add_gg(value = p0, width = 6.5, height = 4.5) %>%
-            officer::body_add_par(
-              "Note: This visualization shows the estimated public sector wage premium, compared to private sector counterparts, after controlling for characteristics including gender, education, tenure, and geographic location.",
-              style = "Normal"
-            ) %>%
-            officer::body_add_par("", style = "Normal")
-        } else {
-          doc <- doc %>%
-            officer::body_add_par("Public Sector Wage Premium (Cross-Section)", style = "heading 1") %>%
-            officer::body_add_par("No data available for the selected countries.", style = "Normal")
-        }
-      }
-      
-      # === GRAPH 1: Multi-country by gender (last year) ===
-      if (!is.null(input$countries_first) && length(input$countries_first) > 0) {
-        d1 <- gender_wage_premium_last %>%
-          dplyr::filter(country_name %in% input$countries_first) %>%
-          tidyr::drop_na(value_percentage)
-        
-        if (!is.numeric(d1$value_percentage)) {
-          suppressWarnings(d1$value_percentage <- as.numeric(d1$value_percentage))
-        }
-        
-        if (nrow(d1) > 0) {
-          cols_gender <- c("Male" = "#E69F00", "Female" = "#56B4E9")
-          
-          p1 <- ggplot2::ggplot(
-            d1, ggplot2::aes(x = country_name, y = value_percentage, color = indicator_label)
-          ) +
-            ggplot2::geom_point(size = 3) +
-            ggplot2::scale_color_manual(values = cols_gender, name = "Gender") +
-            ggplot2::labs(
-              title = "Public Sector Wage Premium by Gender (Last Year Available)",
-              x = "Country", y = "Wage Premium (%)"
-            ) +
-            ggplot2::theme_minimal() +
-            ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-          
-          doc <- doc %>%
-            officer::body_add_par("First Graph: Wage Premium by Gender (Multi-Country)", style = "heading 1") %>%
-            officer::body_add_gg(value = p1, width = 6.5, height = 4.5) %>%
-            officer::body_add_par(
-              "Note: Each dot shows the public-sector wage premium for the latest available year in each country. Positive values indicate higher wages in the public sector relative to the private sector within the same gender; negative values indicate the opposite. Reference years vary by country.",
-              style = "Normal"
-            ) %>%
-            officer::body_add_par("", style = "Normal")
-        } else {
-          doc <- doc %>%
-            officer::body_add_par("First Graph: Wage Premium by Gender (Multi-Country)", style = "heading 1") %>%
-            officer::body_add_par("No data available for the selected countries.", style = "Normal")
-        }
-      }
-      
-      # === GRAPH 2: Single-country time series by gender ===
-      if (isTruthy(input$country_second)) {
-        d2 <- gender_wage_premium %>%
-          dplyr::filter(country_name == input$country_second) %>%
-          tidyr::drop_na(value_percentage)
-        
-        if (!is.numeric(d2$value_percentage)) {
-          suppressWarnings(d2$value_percentage <- as.numeric(d2$value_percentage))
-        }
-        
-        if (nrow(d2) > 0) {
-          d2 <- d2 %>%
-            dplyr::mutate(
-              indicator_label = forcats::fct_relevel(indicator_label, "Female", "Male") %>%
-                forcats::fct_drop()
-            )
-          
-          cols_gender <- c("Female" = "#56B4E9", "Male" = "#E69F00")
-          present <- intersect(names(cols_gender), levels(d2$indicator_label))
-          
-          p2 <- ggplot2::ggplot(
-            d2, ggplot2::aes(x = year, y = value_percentage,
-                             color = indicator_label, group = indicator_label)
-          ) +
-            ggplot2::geom_line(size = 1) +
-            ggplot2::geom_point(size = 2.8) +
-            ggplot2::scale_color_manual(values = cols_gender[present],
-                                        breaks = present, name = "Gender") +
-            ggplot2::labs(
-              title = paste0("Public Sector Wage Premium Over Time — ", input$country_second),
-              x = "Year", y = "Wage Premium (%)"
-            ) +
-            ggplot2::theme_minimal()
-          
-          doc <- doc %>%
-            officer::body_add_par("", style = "heading 1") %>%
-            officer::body_add_gg(value = p2, width = 6.5, height = 4.5) %>%
-            officer::body_add_par(
-              "Note: Lines show the evolution of the public-sector wage premium for men and women. Positive values indicate higher wages in the public sector relative to the private sector within the same gender; negative values indicate the opposite.",
-              style = "Normal"
-            )
-        } else {
-          doc <- doc %>%
-            officer::body_add_par("Second Graph: Wage Premium by Gender (Single Country, Over Time)", style = "heading 1") %>%
-            officer::body_add_par("No data available for the selected country.", style = "Normal")
-        }
-      }  
-      
-      # ---- Write file ----
-      print(doc, target = file)
-    } 
-  )    
-  
-  
-  generate_wage_premium_report_section <- function(doc, selected_countries) {
-    # Add Section Title and Intro
-    doc <- doc %>%
-      body_add_par("Public Sector Wage Premium Analysis", style = "heading 1") %>%
-      body_add_par(
-        "This section presents an analysis of public sector wage premiums compared to private sector employees across selected countries.", 
-        style = "Normal"
-      )
-    
-    # ✅ Validate country input
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Filter data
-    filtered_data <- public_wage_premium %>% 
-      filter(country_name %in% selected_countries) %>%
-      drop_na(value_percentage)
-    
-    if (nrow(filtered_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Extract first country
-    first_country <- selected_countries[1]
-    
-    # ✅ Summary statistics
-    avg_wage_premium <- round(mean(filtered_data$value_percentage, na.rm = TRUE), 1)
-    
-    highest_country <- filtered_data %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>% first()
-    
-    lowest_country <- filtered_data %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>% first()
-    
-    first_country_premium <- filtered_data %>%
-      filter(country_name == first_country) %>%
-      pull(value_percentage) %>%
-      first() %>% coalesce(0)
-    
-    comparison_premium <- filtered_data %>%
-      filter(country_name != first_country) %>%
-      summarise(avg = mean(value_percentage, na.rm = TRUE)) %>%
-      pull(avg) %>% coalesce(0)
-    
-    comparison_statement <- if (!is.na(first_country_premium) && !is.na(comparison_premium)) {
-      if (first_country_premium > comparison_premium) {
-        paste0("This is higher than the average of ", round(comparison_premium, 1), "% across the other selected countries.")
-      } else {
-        paste0("This is lower than the average of ", round(comparison_premium, 1), "% across the other selected countries.")
-      }
-    } else {
-      "Comparison data is not available."
-    }
-    
-    # ✅ Plot
-    filtered_data <- filtered_data %>%
-      mutate(color = ifelse(country_name == first_country, "#0072B2", "#D55E00"))
-    
-    ggplot_obj <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, color = color)) +
-      geom_point(size = 5) +
-      scale_color_identity() +
-      labs(title = "Public Sector Wage Premium by Country", x = "Country", y = "Wage Premium (%)") +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = ggplot_obj, width = 8, height = 6)
-    
-    # ✅ Interpretation text
-    interpretation_text <- paste0(
-      "This graph compares public sector wage premiums across selected countries. ",
-      "On average, public sector employees earn ", avg_wage_premium, "% more than private sector employees. ",
-      "The country with the highest wage premium is ", highest_country, ", while ", lowest_country, " has the lowest.\n\n",
-      "In ", first_country, ", the wage premium is ", round(first_country_premium, 1), "%. ",
-      comparison_statement
-    )
-    
-    # ✅ Add to document
-    doc <- doc %>% 
-      body_add_img(src = img_path, width = 6, height = 4) %>% 
-      body_add_par("This graph shows the wage premium in the public sector relative to private sector employees across selected countries.", style = "Normal") %>%
-      body_add_par(interpretation_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Report
-  
-  output$downloadWagePremiumReport <- downloadHandler(
-    filename = function() {
-      paste0("Public_Sector_Wage_Premium_Report_", Sys.Date(), ".docx")
-    },
-    content = function(file) {
-      
-     
-      req(input$countries_wage_premium)
-      selected_countries <- input$countries_wage_premium
-      
-     
-      doc <- officer::read_docx()
-      
-  
-      doc <- generate_wage_premium_report_section(doc, selected_countries)
-      
-     
-      print(doc, target = file)
-    }
-  )
-  
-  #Download cvs
-  
-  output$dl_csv_wage_premium <- downloadHandler(
-    filename = function() paste0("public_sector_wage_premium_", Sys.Date(), ".csv"),
-    content  = function(file) {
-      req(input$countries_wage_premium)
-      
-      df <- public_wage_premium %>%
-        dplyr::filter(country_name %in% input$countries_wage_premium) %>%
-        dplyr::select(country_name, year, value_percentage) %>%
-        tidyr::drop_na(value_percentage) %>%
-        dplyr::mutate(
-          highlighted = country_name == input$countries_wage_premium[1],   # matches plot highlight
-          color_hex   = ifelse(highlighted, "#B3242B", "#003366")
-        ) %>%
-        dplyr::arrange(country_name, year)
-      
-      utils::write.csv(df, file, row.names = FALSE, na = "")
-    }
-  )
-  
-  
-  #Female share of employment
-  
-  output$employment_plot <- renderPlotly({
-    filtered_data <- gender_workforce %>% 
-      filter(country_name %in% input$countries_workforce)
-    
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    public_latest <- filtered_data %>% 
-      filter(indicator_name == "Females, as a share of public paid employees") %>% 
-      group_by(country_name) %>% 
-      filter(year == max(year, na.rm = TRUE)) %>% 
-      ungroup()
-    
-    private_latest <- filtered_data %>% 
-      filter(indicator_name == "Females, as a share of private paid employees") %>% 
-      group_by(country_name) %>% 
-      filter(year == max(year, na.rm = TRUE)) %>% 
-      ungroup()
-    
-    if (nrow(public_latest) == 0 || nrow(private_latest) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for one or both sectors in the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    plot <- plot_ly(data = public_latest,
-                    x = ~country_name,
-                    y = ~value_percentage,
-                    type = 'bar',
-                    color = I("#0072B2"),
-                    text = ~paste("Country:", country_name,
-                                  "Indicator:", indicator_name,
-                                  "Value:", round(value_percentage, 1), "%",
-                                  "Year:", year),
-                    hoverinfo = "text",
-                    name = "Public Sector",
-                    showlegend = TRUE) %>%
-      add_trace(data = private_latest,
-                x = ~country_name,
-                y = ~value_percentage,
-                type = "scatter",
-                mode = "markers",
-                marker = list(size = 10, color = "#D55E00"),
-                name = "Private Sector",
-                text = ~paste("Country: ", country_name, 
-                              "<br>Last year available: ", year, 
-                              "<br>Employment (%): ", round(value_percentage, 2)),
-                hoverinfo = "text",
-                showlegend = TRUE) %>%
-      layout(barmode = "group",
-             title = "Female Employment by Sector (Last Year Available)",
-             xaxis = list(title = "Country (Last Year Available)",
-                          tickmode = 'array',
-                          tickvals = public_latest$country_name,
-                          ticktext = paste(public_latest$country_name, "(", public_latest$year, ")")),
-             yaxis = list(title = "Employment (%)"),
-             legend = list(title = list(text = "Sector")))
-    
-    plot
-  })
-  
-  output$note_female_employment <- renderText({
-    "Note: This indicator represents female employment as a percentage of paid employees in the public and private sectors. Public sector data is displayed as bars, while private sector data is represented as scatter points.The indicator shows the last year available for each selected country/region/income group(s)."
-  })
-  
-  output$note_female_employment_time <- renderText({
-    "Note: This visualization explores female employment in the public and private sectors over time for the selected country"
-  })
-  output$employment_plot_overtime <- renderPlotly({
-    filtered_data <- gender_workforce %>% filter(country_name == input$selected_country)
-    if(nrow(filtered_data) == 0) return(NULL)
-    custom_colors <- c("Females, as a share of private paid employees" = "#0072B2", 
-                       "Females, as a share of public paid employees" = "#D55E00")
-    plot <- filtered_data %>% plot_ly(x = ~year,
-                                      y = ~value_percentage,
-                                      color = ~indicator_name,
-                                      colors = custom_colors,
-                                      type = 'scatter',
-                                      mode = 'lines+markers',
-                                      hoverinfo = 'text',
-                                      text = ~paste("Country:", country_name, "<br>Sector:", indicator_name, "<br>Year:", year, "<br>Female Employment:", value_percentage)) %>%
-      layout(title = paste("Female Employment by Sector Over Time in", input$selected_country),
-             xaxis = list(title = "Year"),
-             yaxis = list(title = "Female Employment (%)"),
-             legend = list(title = list(text = "<b>Sector</b>")),
-             hovermode = "closest")
-    plot <- plot_ly(data = data_to_plot_long,
-                    x = ~year,
-                    y = ~value_percentage,
-                    color = ~indicator_label,
-                    colors = c("Male" = "#0072B2", "Female" = "#D55E00"),
-                    type = "scatter",
-                    mode = "lines+markers") %>%
-      add_annotations(x = ~year,
-                      y = ~value_percentage,
-                      text = ~round(value_percentage, 2),
-                      showarrow = FALSE,
-                      font = list(size = 12, color = "black"),
-                      xanchor = "center",
-                      yanchor = "bottom") %>%
-      layout(title = "Public Sector Wage Premium Over Time",
-             xaxis = list(title = "Year"),
-             yaxis = list(title = "Wage Premium (%)"),
-             legend = list(title = list(text = "Gender")))
-    
-    plot
-  })
-  
-  output$downloadGraphswagepremium <- downloadHandler(
-    filename = function() paste0("Wage_Premium_by_Country_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      # guard: need at least one country selected
-      if (is.null(input$countries_wage_premium) || length(input$countries_wage_premium) == 0) {
-        doc <- officer::read_docx() %>%
-          body_add_par("Public Sector Wage Premium (Compared to All Private Employees) by Country", style = "heading 1") %>%
-          body_add_par("No countries selected.", style = "Normal")
-        print(doc, target = file)
-        return(invisible())
-      }
-      
-      # data -> same filter as the plotly graph
-      sel <- input$countries_wage_premium
-      dat <- public_wage_premium %>%
-        dplyr::filter(country_name %in% sel) %>%
-        dplyr::select(country_name, value_percentage, year) %>%
-        tidyr::drop_na(value_percentage)
-      
-      # if no rows, write a tiny note doc
-      if (nrow(dat) == 0) {
-        doc <- officer::read_docx() %>%
-          body_add_par("Public Sector Wage Premium (Compared to All Private Employees) by Country", style = "heading 1") %>%
-          body_add_par("No data available for the selected country/countries.", style = "Normal")
-        print(doc, target = file)
-        return(invisible())
-      }
-      
-      # highlight first selection like your plotly: red for the first, blue for others
-      dat <- dat %>%
-        dplyr::mutate(
-          highlight = dplyr::if_else(country_name == sel[1], "first", "other")
-        )
-      
-      p <- ggplot(dat, aes(x = country_name, y = value_percentage, color = highlight)) +
-        geom_point(size = 3) +
-        scale_color_manual(values = c(first = "#B3242B", other = "#003366"), guide = "none") +
-        labs(
-          title = "Public Sector Wage Premium (Compared to All Private Employees) by Country",
-          x = "Country", y = "Public Sector Wage Premium (%)"
-        ) +
-        theme_minimal(base_size = 12) +
-        theme(
-          axis.text.x = element_text(angle = 45, hjust = 1)
-        )
-      
-      # save plot to a temp image (no hard-coded paths)
-      img_path <- tempfile(fileext = ".png")
-      ggsave(img_path, plot = p, width = 7, height = 4.5, dpi = 300)
-      
-      # build the doc
-      doc <- officer::read_docx()
-      title_style <- officer::fp_text(color = "#222222", font.size = 16, bold = TRUE)
-      
-      doc <- doc %>%
-        body_add_fpar(fpar(ftext("Wage Premium Report", prop = title_style))) %>%
-        body_add_par("", style = "Normal") %>%
-        body_add_par("Selected countries:", style = "heading 2") %>%
-        body_add_par(paste(sel, collapse = ", "), style = "Normal") %>%
-        body_add_par("", style = "Normal") %>%
-        body_add_par("Chart", style = "heading 2") %>%
-        body_add_img(src = img_path, width = 6.5, height = 4) %>%
-        body_add_par("Note: The first selected country is highlighted in red.", style = "Normal")
-      
-      print(doc, target = file)
-    }
-  )
-  generate_wage_premium_gender_section <- function(doc, selected_countries) {
-    # Add section title and intro
-    doc <- doc %>%
-      body_add_par("Wage Premium Gender Analysis", style = "heading 1") %>%
-      body_add_par(
-        "This section presents evidence on public sector employment and compensation practices by gender across selected countries.",
-        style = "Normal"
-      )
-    
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    first_country <- selected_countries[1]
-    
-    # ────────────────────────────────────────────────
-    # ✅ Graph 1: Multi-Country Wage Premium by Gender
-    # ────────────────────────────────────────────────
-    data_to_plot <- gender_wage_premium_last %>% filter(country_name %in% selected_countries)
-    
-    if (nrow(data_to_plot) > 0) {
-      # Graph
-      multi_country_plot <- ggplot(data_to_plot, aes(x = country_name, y = value_percentage, color = indicator_label)) +
-        geom_point(size = 3) +
-        scale_color_manual(
-          values = c(
-            "Male" = "#0072B2",    # Colorblind-friendly blue
-            "Female" = "#D55E00"   # Colorblind-friendly orange/red
-          )
-        ) +
-        labs(
-          title = "Public Sector Wage Premium by Gender (Latest Year)",
-          x = "Country", y = "Wage Premium (%)", color = "Gender"
-        ) +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      
-      
-      img_path1 <- tempfile(fileext = ".png")
-      ggsave(img_path1, plot = multi_country_plot, width = 8, height = 6)
-      
-      # Summary statistics
-      avg_premium <- round(mean(data_to_plot$value_percentage, na.rm = TRUE), 1)
-      
-      highest_country <- data_to_plot %>%
-        filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-        pull(country_name) %>% first()
-      
-      lowest_country <- data_to_plot %>%
-        filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-        pull(country_name) %>% first()
-      
-      first_country_premium <- data_to_plot %>%
-        filter(country_name == first_country) %>%
-        summarise(avg = mean(value_percentage, na.rm = TRUE)) %>%
-        pull(avg) %>% round(1)
-      
-      comparison_premium <- data_to_plot %>%
-        filter(country_name != first_country) %>%
-        summarise(avg = mean(value_percentage, na.rm = TRUE)) %>%
-        pull(avg) %>% round(1)
-      
-      comparison_statement <- if (first_country_premium > comparison_premium) {
-        paste0("This is higher than the average of ", comparison_premium, "% across the other selected countries.")
-      } else {
-        paste0("This is lower than the average of ", comparison_premium, "% across the other selected countries.")
-      }
-      
-      interpretation1 <- paste0(
-        "This graph compares public sector wage premiums by gender across selected countries. ",
-        "On average, the gender wage premium is ", avg_premium, "%. ",
-        "The highest premium is observed in ", highest_country, ", and the lowest in ", lowest_country, ". ",
-        "In ", first_country, ", the premium is ", first_country_premium, "%. ", comparison_statement
-      )
-      
-      # Add to doc
-      doc <- doc %>%
-        body_add_par("Wage Premium by Gender (Multi-Country)", style = "heading 2") %>%
-        body_add_img(src = img_path1, width = 6, height = 4) %>%
-        body_add_par(interpretation1, style = "Normal")
-    } else {
-      doc <- doc %>% body_add_par("No data available for the selected countries (multi-country comparison).", style = "Normal")
-    }
-    
-    # ─────────────────────────────────────────────
-    # ✅ Graph 2: Time Series for First Country
-    # ─────────────────────────────────────────────
-    time_series_data <- gender_wage_premium %>% filter(country_name == first_country)
-    
-    if (nrow(time_series_data) > 0) {
-      time_series_plot <- ggplot(time_series_data, aes(x = year, y = value_percentage, color = indicator_label, group = indicator_label)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(
-          values = c(
-            "Male" = "#0072B2",    # Blue - Colorblind-friendly
-            "Female" = "#D55E00"   # Vermillion - Colorblind-friendly
-          )
-        ) +
-        labs(
-          title = paste("Wage Premium by Gender Over Time in", first_country),
-          x = "Year", y = "Wage Premium (%)", color = "Gender"
-        ) +
-        theme_minimal()
-      
-      img_path2 <- tempfile(fileext = ".png")
-      ggsave(img_path2, plot = time_series_plot, width = 8, height = 6)
-      
-      first_year <- min(time_series_data$year, na.rm = TRUE)
-      last_year  <- max(time_series_data$year, na.rm = TRUE)
-      
-      get_value_for_year <- function(df, year, gender) {
-        val <- df %>% filter(year == year, indicator_label == gender) %>%
-          pull(value_percentage) %>% first()
-        ifelse(is.na(val), "Data not available", round(val, 1))
-      }
-      
-      male_first  <- get_value_for_year(time_series_data, first_year, "Male")
-      female_first <- get_value_for_year(time_series_data, first_year, "Female")
-      male_last   <- get_value_for_year(time_series_data, last_year, "Male")
-      female_last  <- get_value_for_year(time_series_data, last_year, "Female")
-      
-      interpretation2 <- paste0(
-        "This graph shows how the public sector wage premium by gender evolved in ", first_country, ". ",
-        "In ", first_year, ", the wage premium was ", male_first, "% for men and ", female_first, "% for women. ",
-        "By ", last_year, ", it was ", male_last, "% for men and ", female_last, "% for women."
-      )
-      
-      # Add to doc
-      doc <- doc %>%
-        body_add_par("Wage Premium by Gender (Over Time)", style = "heading 2") %>%
-        body_add_img(src = img_path2, width = 6, height = 4) %>%
-        body_add_par(interpretation2, style = "Normal")
-    } else {
-      doc <- doc %>% body_add_par(paste("No time series data available for", first_country), style = "Normal")
-    }
-    
-    return(doc)
-  }
-  
-  #Slides
-  
-  generate_wage_premium_gender_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    first_country <- selected_countries[1]
-    
-    # ────────────────────────────────────────────────
-    # Graph 1: Multi-Country Wage Premium by Gender
-    # ────────────────────────────────────────────────
-    data_to_plot <- gender_wage_premium_last %>% filter(country_name %in% selected_countries)
-    
-    if (nrow(data_to_plot) > 0) {
-      multi_country_plot <- ggplot(data_to_plot, aes(x = country_name, y = value_percentage, color = indicator_label)) +
-        geom_point(size = 3) +
-        scale_color_manual(
-          values = c(
-            "Male" = "#0072B2",    # Colorblind-friendly blue
-            "Female" = "#D55E00"   # Colorblind-friendly orange/red
-          )
-        ) +
-        labs(
-          title = "Public Sector Wage Premium by Gender (Latest Year)",
-          x = "Country", y = "Wage Premium (%)", color = "Gender"
-        ) +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      
-      img_path1 <- tempfile(fileext = ".png")
-      ggsave(img_path1, plot = multi_country_plot, width = 8, height = 6)
-      
-      ppt <- ppt %>%
-        add_slide(layout = "Title and Content", master = "Office Theme") %>%
-        ph_with(external_img(img_path1, height = 5, width = 7), location = ph_location_type(type = "body"))
-    }
-    
-    # ─────────────────────────────────────────────
-    # Graph 2: Time Series for First Country
-    # ─────────────────────────────────────────────
-    time_series_data <- gender_wage_premium %>% filter(country_name == first_country)
-    
-    if (nrow(time_series_data) > 0) {
-      time_series_plot <- ggplot(time_series_data, aes(x = year, y = value_percentage, color = indicator_label, group = indicator_label)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(
-          values = c(
-            "Male" = "#0072B2",    # Blue - Colorblind-friendly
-            "Female" = "#D55E00"   # Vermillion - Colorblind-friendly
-          )
-        ) +
-        labs(
-          title = paste("Wage Premium by Gender Over Time in", first_country),
-          x = "Year", y = "Wage Premium (%)", color = "Gender"
-        ) +
-        theme_minimal()
-      
-      img_path2 <- tempfile(fileext = ".png")
-      ggsave(img_path2, plot = time_series_plot, width = 8, height = 6)
-      
-      ppt <- ppt %>%
-        add_slide(layout = "Title and Content", master = "Office Theme") %>%
-        ph_with(external_img(img_path2, height = 5, width = 7), location = ph_location_type(type = "body"))
-    }
-    
-    return(ppt)
-  }
-  
-  #Download cvs 
-  
-  # ---- indicator_name values as in your dataset ----
-  .public_label  <- "as a share of public paid employees"
-  .private_label <- "as a share of private paid employees"
-  
-  .sector_from <- function(x) dplyr::case_when(
-    x == .public_label  ~ "Public",
-    x == .private_label ~ "Private",
-    TRUE ~ NA_character_
-  )
-  
-  output$dl_csv_gender_emp_both <- downloadHandler(
-    filename = function() paste0("female_employment_public_private_", Sys.Date(), ".csv"),
-    content  = function(file) {
-      
-      # accept either set of inputs (workforce tab OR gender tab)
-      countries_multi <- if (!is.null(input$countries_workforce) && length(input$countries_workforce)) {
-        input$countries_workforce
-      } else if (!is.null(input$countries_gender) && length(input$countries_gender)) {
-        input$countries_gender
-      } else character(0)
-      
-      country_single <- if (!is.null(input$selected_country) && nzchar(input$selected_country)) {
-        input$selected_country
-      } else if (!is.null(input$country_gender) && nzchar(input$country_gender)) {
-        input$country_gender
-      } else NA_character_
-      
-      empty_schema <- tibble::tibble(
-        graph            = character(),
-        country_name     = character(),
-        sector           = character(),
-        year             = numeric(),
-        value_percentage = numeric()
-      )
-      
-      # ---------- A) cross-section (latest per country & sector) ----------
-      dA <- tryCatch({
-        if (!length(countries_multi)) return(empty_schema)
-        
-        gender_workforce %>%
-          dplyr::filter(
-            country_name %in% countries_multi,
-            indicator_name %in% c(.public_label, .private_label)
-          ) %>%
-          dplyr::group_by(country_name, indicator_name) %>%
-          dplyr::slice_max(order_by = year, n = 1, with_ties = FALSE) %>%
-          dplyr::ungroup() %>%
-          dplyr::transmute(
-            graph  = "cross_section_last_year",
-            country_name,
-            sector = .sector_from(indicator_name),
-            year   = as.numeric(year),
-            value_percentage = as.numeric(value_percentage)
-          )
-      }, error = function(e) empty_schema)
-      
-      # ---------- B) over-time (single country, both sectors) ----------
-      dB <- tryCatch({
-        if (is.na(country_single) || !nzchar(country_single)) return(empty_schema)
-        
-        gender_workforce %>%
-          dplyr::filter(
-            country_name == country_single,
-            indicator_name %in% c(.public_label, .private_label)
-          ) %>%
-          dplyr::mutate(
-            graph  = "single_country_overtime",
-            sector = .sector_from(indicator_name)
-          ) %>%
-          dplyr::select(graph, country_name, sector, year, value_percentage) %>%
-          dplyr::arrange(year, sector)
-      }, error = function(e) empty_schema)
-      
-      out <- dplyr::bind_rows(dA, dB)
-      if (nrow(out) == 0) out <- empty_schema
-      
-      utils::write.csv(out, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
-    }
-  )
-  
-  
-  # Wage premium by Education Level 
-  
-  # Render the Public Sector Wage Premium by Education Level Graph
-  
+  # ── EDUCATION WAGE PREMIUM ───────────────────────────────────────────────────
   output$education_wage_premium_plot <- renderPlotly({
-    req(input$selected_country)  # Ensure a country is selected
-    
-    # Filter the data set for the selected country
-    filtered_data <- public_wage_premium_educ %>%
-      filter(country_name == input$selected_country) %>%
-      drop_na(value_percentage)  # Remove NAs
-    
-    # Check if there's data
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Define colorblind-friendly colors for education levels
-    education_colors <- c(
-      "No Education"        = "#E69F00",  # Orange
-      "Primary Education"   = "#56B4E9",  # Sky Blue
-      "Secondary Education" = "#009E73",  # Bluish Green
-      "Tertiary Education"  = "#D55E00"   # Vermillion
-    )
-    
-    # Create the bar plot
-    filtered_data$text <- paste(
-      "Country:", filtered_data$country_name,
-      "Indicator:", filtered_data$indicator_name,
-      "Value:", round(filtered_data$value_percentage, 1), "%",
-      "Year:", filtered_data$year
-    )
-    
-    p <- ggplot(filtered_data, aes(x = indicator_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity") +
-      scale_fill_manual(values = education_colors) +
-      labs(
-        title = "Public Sector Wage Premium by Education Level (Compared to Private Formal Workers)",
-        x = "Education Level",
-        y = "Wage Premium (%)",
-        fill = "Education Level"
-      ) +
-      theme_minimal()
-    
-    ggplotly(p, tooltip = "text")  # Convert ggplot to Plotly for interactivity
+    req(input$selected_country)
+    filtered_data <- public_wage_premium_educ %>% filter(country_name==input$selected_country) %>% drop_na(value_percentage)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="bar") %>% layout(title="No data available"))
+    education_colors <- c("No Education"="#E69F00","Primary Education"="#56B4E9","Secondary Education"="#009E73","Tertiary Education"="#D55E00")
+    p <- ggplot(filtered_data, aes(x=indicator_name, y=value_percentage, fill=indicator_name)) +
+      geom_bar(stat="identity") + scale_fill_manual(values=education_colors) +
+      labs(title="Public Sector Wage Premium by Education Level", x="Education Level", y="Wage Premium (%)") + theme_minimal()
+    ggplotly(p)
   })
   
   output$note_education_wage_premium <- renderText({
-    "Note: This indicator represents the public sector wage premium across different education levels, comparing public sector wages to those of private formal workers.The indicator shows the last year available for each selected country/region/income group(s)."
+    "Note: Public sector wage premium across education levels compared to private formal workers. Shows last year available."
   })
-  
-  output$downloadEducationWagePremium <- downloadHandler(
-    filename = function() paste0("Public_Sector_Wage_Premium_Education_Level_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      req(input$selected_country)
-      
-      # ---- Filter and validate data ----
-      filtered_df <- public_wage_premium_educ %>%
-        dplyr::filter(country_name == input$selected_country) %>%
-        tidyr::drop_na(value_percentage)
-      
-      req(nrow(filtered_df) > 0)
-      
-      # Ensure numeric (in case it was character)
-      if (!is.numeric(filtered_df$value_percentage)) {
-        suppressWarnings({
-          filtered_df$value_percentage <- as.numeric(filtered_df$value_percentage)
-        })
-      }
-      
-      # ---- Title text (selected country) ----
-      report_title <- paste0("Public Sector Wage Premium by Education Level – ", input$selected_country)
-      
-      # ---- Create the Word doc and add title + sections (same style as other reports) ----
-      title_style <- fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- read_docx()
-      
-      doc <- doc %>%
-        body_add_fpar(fpar(ftext(report_title, prop = title_style))) %>%
-        body_add_par("", style = "Normal") %>%   # spacer
-        body_add_par("Introduction", style = "heading 2") %>%
-        body_add_par(
-          paste0(
-            "This section presents the public sector wage premium—the percentage difference in wages ",
-            "between public sector workers and their private formal counterparts—by education level for ",
-            input$selected_country, "."
-          ),
-          style = "Normal"
-        ) %>%
-        body_add_par("Competitiveness of public sector", style = "heading 2") %>%
-        body_add_par("", style = "Normal")       # spacer before plot
-      
-      # ---- Order levels for a pleasant left-to-right (optional) ----
-      edu_order <- c("No Education", "Primary Education", "Secondary Education", "Tertiary Education")
-      if ("indicator_name" %in% names(filtered_df)) {
-        filtered_df$indicator_name <- factor(filtered_df$indicator_name,
-                                             levels = intersect(edu_order, unique(filtered_df$indicator_name)))
-      }
-      
-      # ---- Plot (bar by education level; keep legend visible) ----
-      p <- ggplot2::ggplot(
-        filtered_df,
-        ggplot2::aes(x = indicator_name, y = value_percentage, fill = indicator_name)
-      ) +
-        ggplot2::geom_col(width = 0.7) +
-        ggplot2::scale_fill_manual(
-          values = c(
-            "No Education"        = "#E69F00",
-            "Primary Education"   = "#56B4E9",
-            "Secondary Education" = "#009E73",
-            "Tertiary Education"  = "#D55E00"
-          ),
-          name = NULL
-        ) +
-        ggplot2::labs(
-          title = "Public Sector Wage Premium by Education Level",
-          x = NULL,                      # remove axis title
-          y = "Wage Premium (%)"
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::coord_cartesian(clip = "off") +
-        ggplot2::theme(
-          legend.position = "right",
-          plot.margin = ggplot2::margin(10, 40, 10, 10),
-          axis.text.x  = ggplot2::element_blank(),   # <-- hide labels
-          axis.ticks.x = ggplot2::element_blank()    # <-- hide tick marks
-        )
-      
-      # ---- Add plot + note (same pattern as your other reports) ----
-      doc <- doc %>%
-        officer::body_add_gg(value = p, width = 6.5, height = 4.5) %>%
-        body_add_par(
-          "Note: Estimates reflect the public sector wage premium relative to private formal workers, by education level, controlling for observable characteristics where available.",
-          style = "Normal"
-        )
-      
-      # ---- Write the file ----
-      print(doc, target = file)
-    }
-  )
-  
-  generate_wage_premium_education_section <- function(doc, selected_countries) {
-    # Section Title
-    doc <- doc %>% body_add_par("Public Sector Wage Premium by Education Level", style = "heading 1")
-    
-    # Validate selected countries
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    # Extract first country
-    first_country <- selected_countries[1]
-    
-    # Add intro paragraph
-    doc <- doc %>% body_add_par(
-      paste0("This section presents an analysis of public sector wage premiums based on different education levels for ", 
-             first_country, ". The comparison is made against private sector formal workers."), 
-      style = "Normal"
-    )
-    
-    # Filter data
-    filtered_data <- public_wage_premium_educ %>%
-      filter(country_name %in% selected_countries) %>%
-      drop_na(value_percentage)
-    
-    if (nrow(filtered_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # Plot
-    ggplot_obj <- ggplot(filtered_data, aes(x = indicator_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_manual(values = c(
-        "No Education"       = "#E69F00",  # Orange
-        "Primary Education"  = "#56B4E9",  # Sky Blue
-        "Secondary Education"= "#009E73",  # Bluish Green
-        "Tertiary Education" = "#D55E00"   # Vermillion
-      )) +
-      labs(
-        title = "Public Sector Wage Premium by Education Level",
-        x = "Education Level",
-        y = "Wage Premium (%)",
-        fill = "Education Level"
-      ) +
-      theme_minimal()
-    
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = ggplot_obj, width = 8, height = 6)
-    
-    # Summary stats
-    highest_education <- filtered_data %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(indicator_name) %>%
-      first()
-    
-    lowest_education <- filtered_data %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(indicator_name) %>%
-      first()
-    
-    avg_wage_premium <- round(mean(filtered_data$value_percentage, na.rm = TRUE), 1)
-    
-    first_country_premium <- filtered_data %>%
-      filter(country_name == first_country) %>%
-      summarise(avg_premium = mean(value_percentage, na.rm = TRUE)) %>%
-      pull(avg_premium) %>%
-      coalesce(0)
-    
-    comparison_premium <- filtered_data %>%
-      filter(country_name != first_country) %>%
-      summarise(avg_other_countries = mean(value_percentage, na.rm = TRUE)) %>%
-      pull(avg_other_countries) %>%
-      coalesce(0)
-    
-    comparison_statement <- if (first_country_premium > comparison_premium) {
-      paste0("This is higher than the average of ", round(comparison_premium, 1), "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", round(comparison_premium, 1), "% across the other selected countries.")
-    }
-    
-    # Interpretation
-    interpretation_text <- paste0(
-      "This graph illustrates public sector wage premiums by education level in ", first_country, 
-      ", comparing earnings with private sector formal workers. ",
-      "On average, the public sector wage premium in ", first_country, " is ", round(first_country_premium, 0), "%. ",
-      "The highest wage premium is observed for those with ", highest_education, 
-      ", while the lowest is for those with ", lowest_education, ". ", comparison_statement
-    )
-    
-    # Add to doc
-    doc <- doc %>% 
-      body_add_img(src = img_path, width = 6, height = 4) %>% 
-      body_add_par("This graph shows the public sector wage premium by education level, comparing earnings with private sector formal workers.", style = "Normal") %>%
-      body_add_par(interpretation_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Slides
-  
-  generate_wage_premium_education_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter data
-    filtered_data <- public_wage_premium_educ %>%
-      filter(country_name %in% selected_countries) %>%
-      drop_na(value_percentage)
-    
-    if (nrow(filtered_data) == 0) {
-      return(ppt)
-    }
-    
-    # Generate plot
-    ggplot_obj <- ggplot(filtered_data, aes(x = indicator_name, y = value_percentage, fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_manual(values = c(
-        "No Education"       = "#E69F00",  # Orange
-        "Primary Education"  = "#56B4E9",  # Sky Blue
-        "Secondary Education"= "#009E73",  # Bluish Green
-        "Tertiary Education" = "#D55E00"   # Vermillion
-      )) +
-      labs(
-        title = "Public Sector Wage Premium by Education Level",
-        x = "Education Level",
-        y = "Wage Premium (%)",
-        fill = "Education Level"
-      ) +
-      theme_minimal()
-    
-    # Save image
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = ggplot_obj, width = 8, height = 6)
-    
-    # Add slide
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  #Download cvs 
   
   output$dl_csv_wagepremium_educ <- downloadHandler(
-    filename = function() {
-      cn <- if (!is.null(input$selected_country) && nzchar(input$selected_country))
-        gsub("[^A-Za-z0-9]+", "_", input$selected_country) else "selected_country"
-      paste0("public_wage_premium_by_education_", cn, "_", Sys.Date(), ".csv")
-    },
-    content = function(file) {
+    filename = function() paste0("public_wage_premium_by_education_",Sys.Date(),".csv"),
+    content  = function(file) {
       req(input$selected_country)
-      
-      # data used by the plot
-      df <- public_wage_premium_educ %>%
-        dplyr::filter(country_name == input$selected_country) %>%
-        tidyr::drop_na(value_percentage) %>%
-        dplyr::transmute(
-          country_name,
-          year = as.numeric(year),
-          education_level = indicator_name,          # matches your plot's x
-          wage_premium_pct = as.numeric(value_percentage)
-        )
-      
-      # latest year per education level (for clean cross-section)
-      latest <- df %>%
-        dplyr::group_by(education_level) %>%
-        dplyr::slice_max(order_by = year, n = 1, with_ties = FALSE) %>%
-        dplyr::ungroup() %>%
-        dplyr::mutate(view = "latest_per_education")
-      
-      # full time series for the selected country
-      all_years <- df %>%
-        dplyr::mutate(view = "all_years")
-      
-      out <- dplyr::bind_rows(latest, all_years) %>%
-        dplyr::arrange(view, education_level, year)
-      
-      utils::write.csv(out, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
+      df <- public_wage_premium_educ %>% dplyr::filter(country_name==input$selected_country) %>% tidyr::drop_na(value_percentage)
+      utils::write.csv(df,file,row.names=FALSE,na="")
     }
   )
   
-  
-  #Public Sector Graphs 
-  
-  # First Graph - Multi-Country Dot Plot
-  
+  # ── PUBLIC SECTOR EMPLOYMENT ─────────────────────────────────────────────────
   output$firstGraphpublic <- renderPlotly({
-    filtered_data <- public_sector_emp_temp_last %>% 
-      filter(country_name %in% input$countries_first)
-    
-    # If there's no data, show a fallback message
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Otherwise, generate the plot
-    
-    filtered_data$text <- paste(
-      "Country:", filtered_data$country_name,
-      "Indicator:", filtered_data$indicator_label,
-      "Value:", round(filtered_data$value_percentage, 1), "%",
-      "Year:", filtered_data$year
-    )
-    
-    
+    filtered_data <- public_sector_emp_temp_last %>% filter(country_name %in% input$countries_first)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
     ggplotly(
-      ggplot(filtered_data, aes(x = country_name, y = value_percentage, color = indicator_label, text = text)) +
-        geom_point(size = 4) +
-        scale_color_manual(values = c(
-          "as a share of formal employment" = "#E69F00",
-          "as a share of paid employment"   = "#56B4E9",
-          "as a share of total employment"  = "#009E73"
-        )) +
-        labs(
-          title = "Public Sector Employment (Last Year Available)", 
-          x = "Country", 
-          y = "Value", 
-          color = "Indicator"
-        ) +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      , tooltip = "text") %>%
-      layout(legend = list(title = list(text = "Indicator")))
-    
+      ggplot(filtered_data, aes(x=country_name, y=value_percentage, color=indicator_label)) +
+        geom_point(size=4) +
+        scale_color_manual(values=c("as a share of formal employment"="#E69F00","as a share of paid employment"="#56B4E9","as a share of total employment"="#009E73")) +
+        labs(title="Public Sector Employment (Last Year Available)", x="Country", y="Value", color="Indicator") +
+        theme_minimal() + theme(axis.text.x=element_text(angle=45,hjust=1))
+    ) %>% layout(legend=list(title=list(text="Indicator")))
   })
-  
   
   output$note_firstGraphpublic <- renderText({
-    "Note:This visualization shows the relative size of public sector employment in the labor market, measured by its share of formal, paid, and total employment for the latest available year. "
+    "Note: Relative size of public sector employment in the labor market for the latest available year."
   })
   
-  # Second Graph - Single-Country Line Plot
-  
+  # KEY CHANGE: secondGraphpublic uses public_sector_emp_temp which is the full
+  # time series (not filtered to latest) — this correctly shows trend over time.
   output$secondGraphpublic <- renderPlotly({
-    filtered_data <- public_sector_emp_temp %>% 
-      filter(country_name == input$country_second)
-    
-    # Fallback if no data available
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Plot if data exists
+    filtered_data <- public_sector_emp_temp %>% filter(country_name==input$country_second)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
     ggplotly(
-      ggplot(filtered_data, aes(x = year, y = value_percentage, color = indicator_label)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(values = c(
-          "as a share of formal employment" = "#E69F00",  # Orange
-          "as a share of paid employment"   = "#56B4E9",  # Sky Blue
-          "as a share of total employment"  = "#009E73"   # Bluish Green
-        )) +
-        labs(
-          title = "Public Sector Employment Over Time", 
-          x = "Year", 
-          y = "Value", 
-          color = "Indicator"
-        ) +
-        theme_minimal()
-    ) %>%
-      layout(legend = list(title = list(text = "Indicator")))
+      ggplot(filtered_data, aes(x=year, y=value_percentage, color=indicator_label)) +
+        geom_line(size=1.2) + geom_point(size=3) +
+        scale_color_manual(values=c("as a share of formal employment"="#E69F00","as a share of paid employment"="#56B4E9","as a share of total employment"="#009E73")) +
+        labs(title="Public Sector Employment Over Time", x="Year", y="Value", color="Indicator") + theme_minimal()
+    ) %>% layout(legend=list(title=list(text="Indicator")))
   })
-  
   
   output$note_secondGraphpublic <- renderText({
-    "Note: This visualization shows the evolution of public sector employment in the labor market of the selected country, expressed as its share of formal, paid, and total employment. The indicator shows the last year available for each selected country/region/income group(s)."
+    "Note: Evolution of public sector employment in the labor market over time."
   })
-  
-  
-  # Download Handler - Save Graphs to Word Document
-  output$downloadGraphsWord <- downloadHandler(
-    filename = function() paste0("Public_Sector_Employment_", Sys.Date(), ".docx"),
-    content = function(file) {
-      
-      req(input$countries_first, length(input$countries_first) > 0, input$country_second)
-      
-      first_sel <- input$countries_first[1]
-      
-      # --- data (unchanged) ---
-      d1 <- public_sector_emp_temp_last %>%
-        dplyr::filter(country_name %in% input$countries_first) %>%
-        dplyr::mutate(
-          indicator_label = factor(indicator_label, levels = c(
-            "as a share of formal employment",
-            "as a share of paid employment",
-            "as a share of total employment"
-          )),
-          country_name = factor(country_name, levels = input$countries_first)
-        )
-      req(nrow(d1) > 0, cancelOutput = TRUE)
-      
-      d2 <- public_sector_emp_temp %>%
-        dplyr::filter(country_name == input$country_second) %>%
-        dplyr::mutate(
-          indicator_label = factor(indicator_label, levels = c(
-            "as a share of formal employment",
-            "as a share of paid employment",
-            "as a share of total employment"
-          ))
-        )
-      req(nrow(d2) > 0, cancelOutput = TRUE)
-      
-      # --- doc start ---
-      doc <- officer::read_docx()
-      
-      # 1. Title with rule under it
-      h1_txt <- paste0("1. Public Sector Employment — ", first_sel)
-      h1_fmt <- officer::fp_text(font.size = 20, bold = TRUE)
-      rule   <- officer::fp_border(color = "#000000", width = 1)
-      p_rule <- officer::fp_par(border.bottom = rule, padding.bottom = 4)
-      
-      doc <- doc |>
-        officer::body_add_fpar(officer::fpar(officer::ftext(h1_txt, h1_fmt))) |>
-        officer::body_add_fpar(officer::fpar(officer::ftext(""), fp_p = p_rule))
-      
-      # 1.1 Introduction  —— your “This report …” text goes here
-      h2_fmt <- officer::fp_text(font.size = 14, bold = TRUE)
-      doc <- doc |>
-        officer::body_add_fpar(officer::fpar(officer::ftext("1.1 Introduction", h2_fmt))) |>
-        officer::body_add_par(
-          "This report presents the analysis of public sector employment across selected countries and its trend over time.",
-          style = "Normal"
-        )
-      
-      # 1.2 Size and Characteristics of the Public Sector (before graphs)
-      doc <- doc |>
-        officer::body_add_fpar(
-          officer::fpar(officer::ftext("1.2 Size and Characteristics of the Public Sector", h2_fmt))
-        )
-      
-      # ---- Graph 1 + note ----
-      p1 <- ggplot2::ggplot(d1, ggplot2::aes(x = country_name, y = value_percentage, color = indicator_label)) +
-        ggplot2::geom_point(size = 4) +
-        ggplot2::scale_color_manual(values = c(
-          "as a share of formal employment" = "#E69F00",
-          "as a share of paid employment"   = "#56B4E9",
-          "as a share of total employment"  = "#009E73"
-        ), drop = FALSE, name = "Indicator") +
-        ggplot2::labs(title = "Public Sector Employment (Last Year Available)", x = "Country", y = "Value (%)") +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-      
-      img1 <- tempfile(fileext = ".png"); ggplot2::ggsave(img1, plot = p1, width = 8, height = 6, dpi = 300)
-      doc <- doc |>
-        officer::body_add_img(src = img1, width = 6.5, height = 4.8) |>
-        officer::body_add_par(
-          "Note: This visualization shows the relative size of public sector employment in the labor market, measured by its share of formal, paid, and total employment for the latest available year.",
-          style = "Normal"
-        )
-      
-      # ---- Graph 2 + note ----
-      p2 <- ggplot2::ggplot(d2, ggplot2::aes(x = year, y = value_percentage, color = indicator_label, group = indicator_label)) +
-        ggplot2::geom_line(size = 1.1) +
-        ggplot2::geom_point(size = 2.8) +
-        ggplot2::scale_color_manual(values = c(
-          "as a share of formal employment" = "#E69F00",
-          "as a share of paid employment"   = "#56B4E9",
-          "as a share of total employment"  = "#009E73"
-        ), drop = FALSE, name = "Indicator") +
-        ggplot2::labs(title = paste0("Public Sector Employment Over Time — ", input$country_second), x = "Year", y = "Value (%)") +
-        ggplot2::theme_minimal()
-      
-      img2 <- tempfile(fileext = ".png"); ggplot2::ggsave(img2, plot = p2, width = 8, height = 6, dpi = 300)
-      doc <- doc |>
-        officer::body_add_img(src = img2, width = 6.5, height = 4.8) |>
-        officer::body_add_par(
-          "Note: This visualization shows the evolution of public sector employment in the labor market of the selected country, expressed as its share of formal, paid, and total employment.",
-          style = "Normal"
-        )
-      
-      print(doc, target = file)
-    }
-  )
-  generate_public_sector_employment_section <- function(doc, selected_countries) {
-    # Add Section Title and Intro
-    doc <- doc %>% 
-      body_add_par("Public Sector Employment Analysis", style = "heading 1") %>% 
-      body_add_par(
-        "This section presents the analysis of public sector employment across selected countries and its trend over time.", 
-        style = "Normal"
-      )
-    
-    # Validate selected countries
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    first_country <- selected_countries[1]
-    if (is.na(first_country)) {
-      doc <- doc %>% body_add_par("Invalid country selection.", style = "Normal")
-      return(doc)
-    }
-    
-    # Filter data for selected countries (last available year)
-    filtered_data <- public_sector_emp_temp_last %>% 
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(filtered_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # First Graph
-    first_graph <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, color = indicator_label)) +
-      geom_point(size = 4) +
-      scale_color_manual(values = c(
-        "as a share of formal employment" = "#E69F00",  # Orange
-        "as a share of paid employment"   = "#56B4E9",  # Sky Blue
-        "as a share of total employment"  = "#009E73"   # Bluish Green
-      )) +
-      labs(
-        title = "Public Sector Employment (Last Year Available)", 
-        x = "Country", 
-        y = "Employment (%)", 
-        color = "Sector"
-      ) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    img_path1 <- tempfile(fileext = ".png")
-    ggsave(img_path1, plot = first_graph, width = 8, height = 6)
-    
-    # Helper functions
-    get_value <- function(df, country, indicator) {
-      val <- df %>% filter(country_name == country, indicator_label == indicator) %>% 
-        pull(value_percentage) %>% first()
-      ifelse(length(val) == 0 || is.na(val), "Data not available", round(val, 0))
-    }
-    
-    get_extreme_country <- function(df, indicator, func) {
-      row <- df %>% 
-        filter(indicator_label == indicator, !is.na(value_percentage)) %>%
-        filter(value_percentage == func(value_percentage, na.rm = TRUE)) %>%
-        slice(1)
-      
-      if (nrow(row) == 0) return(list(country = "N/A", value = "Data not available"))
-      return(list(country = row$country_name, value = round(row$value_percentage, 0)))
-    }
-    
-    # Extract values for first country
-    formal_first <- get_value(filtered_data, first_country, "as a share of formal employment")
-    paid_first   <- get_value(filtered_data, first_country, "as a share of paid employment")
-    total_first  <- get_value(filtered_data, first_country, "as a share of total employment")
-    
-    # Extract max/min across countries
-    formal_highest <- get_extreme_country(filtered_data, "as a share of formal employment", max)
-    formal_lowest  <- get_extreme_country(filtered_data, "as a share of formal employment", min)
-    paid_highest   <- get_extreme_country(filtered_data, "as a share of paid employment", max)
-    paid_lowest    <- get_extreme_country(filtered_data, "as a share of paid employment", min)
-    total_highest  <- get_extreme_country(filtered_data, "as a share of total employment", max)
-    total_lowest   <- get_extreme_country(filtered_data, "as a share of total employment", min)
-    
-    # Comparison logic
-    compare_value <- function(value, high, low) {
-      if (value == "Data not available") return("data not available")
-      if (value > high) {
-        return("This is the highest employment rate among the selected countries.")
-      } else if (value < low) {
-        return("This is the lowest employment rate among the selected countries.")
-      } else {
-        return("This falls within the range observed across the selected countries.")
-      }
-    }
-    
-    formal_comparison <- compare_value(formal_first, formal_highest$value, formal_lowest$value)
-    paid_comparison   <- compare_value(paid_first, paid_highest$value, paid_lowest$value)
-    total_comparison  <- compare_value(total_first, total_highest$value, total_lowest$value)
-    
-    # Interpretation
-    interpretation_text1 <- paste0(
-      "This graph compares public sector employment across selected countries. ",
-      "For employment as a share of formal employment, the highest level is in ", formal_highest$country, 
-      " at ", formal_highest$value, "%, while the lowest is in ", formal_lowest$country, 
-      " at ", formal_lowest$value, "%.\n\n",
-      "For employment as a share of paid employment, the highest level is in ", paid_highest$country, 
-      " at ", paid_highest$value, "%, while the lowest is in ", paid_lowest$country, 
-      " at ", paid_lowest$value, "%.\n\n",
-      "For employment as a share of total employment, the highest level is in ", total_highest$country, 
-      " at ", total_highest$value, "%, while the lowest is in ", total_lowest$country, 
-      " at ", total_lowest$value, "%.\n\n",
-      "In ", first_country, ", public sector employment as a share of formal employment is ", formal_first, "%. ", formal_comparison, "\n",
-      "As a share of paid employment, it is ", paid_first, "%. ", paid_comparison, "\n",
-      "As a share of total employment, it is ", total_first, "%. ", total_comparison
-    )
-    
-    # Add content to doc
-    doc <- doc %>%
-      body_add_par("Public Sector Employment - Last Year Available", style = "heading 2") %>%
-      body_add_img(src = img_path1, width = 6, height = 4) %>%
-      body_add_par(interpretation_text1, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Slides 
-  
-  generate_public_sector_employment_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter data for selected countries (last available year)
-    filtered_data <- public_sector_emp_temp_last %>% 
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(filtered_data) == 0) {
-      return(ppt)  # No data, skip slide
-    }
-    
-    # Plot: Public Sector Employment by Country
-    first_graph <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, color = indicator_label)) +
-      geom_point(size = 4) +
-      scale_color_manual(values = c(
-        "as a share of formal employment" = "#E69F00",  # Orange
-        "as a share of paid employment" = "#56B4E9",    # Sky Blue
-        "as a share of total employment" = "#009E73"    # Bluish Green
-      )) +
-      labs(
-        title = "Public Sector Employment (Last Year Available)", 
-        x = "Country", 
-        y = "Employment (%)", 
-        color = "Sector"
-      ) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    # Save image to temp file
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = first_graph, width = 8, height = 6)
-    
-    # Add slide with the plot only
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  #Download cvs 
   
   output$dl_public_emp_data <- downloadHandler(
-    filename = function() {
-      paste0("public_sector_employment_data_", Sys.Date(), ".xlsx")
-    },
-    content = function(file) {
-      # ===== Graph 1: Multi-country (last year available) =====
-      d1 <- public_sector_emp_temp_last %>%
-        dplyr::filter(country_name %in% input$countries_first) %>%
-        tidyr::drop_na(value_percentage) %>%
-        dplyr::transmute(
-          country_name,
-          indicator = indicator_label,
-          year = as.numeric(year),
-          value_percentage = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(country_name, indicator)
-      
-      # ===== Graph 2: Single-country over time =====
-      d2 <- public_sector_emp_temp %>%
-        dplyr::filter(country_name == input$country_second) %>%
-        tidyr::drop_na(value_percentage) %>%
-        dplyr::transmute(
-          country_name,
-          indicator = indicator_label,
-          year = as.numeric(year),
-          value_percentage = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(year, indicator)
-      
-      # write two sheets
-      writexl::write_xlsx(
-        x = list(
-          "Graph1_MultiCountry_LastYear" = d1,
-          "Graph2_SingleCountry_OverTime" = d2
-        ),
-        path = file
-      )
+    filename = function() paste0("public_sector_employment_data_",Sys.Date(),".xlsx"),
+    content  = function(file) {
+      d1 <- public_sector_emp_temp_last %>% dplyr::filter(country_name %in% input$countries_first) %>%
+        dplyr::transmute(country_name, indicator=indicator_label, year=as.numeric(year), value_percentage=as.numeric(value_percentage))
+      d2 <- public_sector_emp_temp %>% dplyr::filter(country_name==input$country_second) %>%
+        dplyr::transmute(country_name, indicator=indicator_label, year=as.numeric(year), value_percentage=as.numeric(value_percentage))
+      writexl::write_xlsx(list("Graph1_MultiCountry_LastYear"=d1,"Graph2_SingleCountry_OverTime"=d2), path=file)
     }
   )
   
-  #Gender Wage premium 
-  
-  # First Graph - Multi-Country Dot Plot for Wage Premium by Gender
-  output$firstGraphGenderWagePremium <- renderPlotly({
-    filtered_data <- gender_wage_premium_last %>% 
-      filter(country_name %in% input$countries_first)
-    
-    # Show fallback if no data available
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Create the actual plot
-    filtered_data$text <- paste(
-      "Country:", filtered_data$country_name,
-      "Gender:", filtered_data$indicator_label,
-      "Wage Premium:", round(filtered_data$value_percentage, 1), "%",
-      "Year:", filtered_data$year
-    )
-    
-    
-    ggplotly(
-      ggplot(filtered_data, aes(x = country_name, y = value_percentage, color = indicator_label, text = text)) +
-        geom_point(size = 4) +
-        scale_color_manual(values = c(
-          "Male" = "#E69F00",    # Orange
-          "Female" = "#56B4E9"   # Sky Blue
-        )) +
-        labs(
-          title = "Public Sector Wage Premium by Gender (Last Year Available)", 
-          x = "Country", 
-          y = "Wage Premium (%)",
-          color = "Indicator"
-        ) +
-        theme_minimal(),
-      tooltip = "text"
-    )
-  })
-  
-  output$note_firstGraphGenderWagePremium <- renderText({
-    "Note: Each dot shows the public-sector wage premium for the latest available year in each country. The premium is the percentage difference in average wages in the public sector relative to the private sector within the same gender. Positive values mean higher wages in the public sector; negative values mean lower. Country coverage and reference years may differ across countries."
-  })
-  
-  # Second Graph - Single-Country Line Plot for Wage Premium by Gender Over Time
-  
-  output$secondGraphGenderWagePremium <- renderPlotly({
-    filtered_data <- gender_wage_premium %>% 
-      filter(country_name == input$country_second)
-    
-    # Show fallback if no data is available
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Create the ggplot
-    min_y <- min(filtered_data$value_percentage, na.rm = TRUE) - 5
-    
-    ggplotly(
-      ggplot(filtered_data, aes(x = year, y = value_percentage, color = indicator_label)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(values = c(
-          "Male" = "#E69F00",    # Orange
-          "Female" = "#56B4E9"   # Sky Blue
-        )) +
-        labs(
-          title = "Public Sector Wage Premium by Gender Over Time", 
-          x = "Year", 
-          y = "Wage Premium (%)",
-          color = "Indicator"
-        ) +
-        theme_minimal() +
-        annotate("text", x = Inf, y = min_y,
-                 label = "This indicator represents the gender wage premium across industries in the public sector.",
-                 hjust = 1, size = 4, color = "black", fontface = "italic")
-    )
-  })
-  
-  output$note_secondGraphGenderWagePremium <- renderText({
-    "Note: This indicator represents the public sector wage premium for men and women over time, comparing compensation in the public sector with that in the private sector for each gender."
-  })
-  
-  # Download Handler - Save Gender Wage Premium Graphs to Word Document
-  output$downloadGraphsWordGenderWagePremium <- downloadHandler(
-    filename = function() {
-      paste0("Public_Sector_Wage_Premium_Gender_", Sys.Date(), ".docx")
-    },
-    content = function(file) {
-      doc <- read_docx()
-      
-      # Title
-      title_style <- fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- doc %>% body_add_fpar(fpar(ftext("Public Sector Wage Premium by Gender", prop = title_style)))
-      
-      # Intro Text
-      doc <- doc %>% body_add_par(
-        "This report presents an analysis of public sector wage premium by gender across selected countries and its trend over time.", 
-        style = "Normal"
-      )
-      
-      # First Graph - Save as Image
-      first_graph <- ggplot(gender_wage_premium_last %>% filter(country_name %in% input$countries_first), 
-                            aes(x = country_name, y = value_percentage, color = indicator_label)) +
-        geom_point(size = 4) +
-        scale_color_manual(values = c(
-          "Male" = "#E69F00",    # Orange
-          "Female" = "#56B4E9"   # Sky Blue
-        )) +
-        labs(
-          title = "Public Sector Wage Premium by Gender (Last Year Available)", 
-          x = "Country", 
-          y = "Wage Premium (%)",
-          color = "Gender"
-        ) +
-        theme_minimal()
-      
-      img_path1 <- tempfile(fileext = ".png")
-      ggsave(img_path1, plot = first_graph, width = 8, height = 6)
-      
-      doc <- doc %>% body_add_par("Public Sector Wage Premium by Gender - Last Year Available", style = "heading 2")
-      doc <- doc %>% body_add_img(src = img_path1, width = 6, height = 4)
-      
-      # Second Graph - Save as Image
-      second_graph <- ggplot(gender_wage_premium %>% filter(country_name == input$country_second), 
-                             aes(x = year, y = value_percentage, color = indicator_label)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(values = c(
-          "Male" = "#E69F00",    # Orange
-          "Female" = "#56B4E9"   # Sky Blue
-        )) +
-        labs(
-          title = "Public Sector Wage Premium by Gender Over Time", 
-          x = "Year", 
-          y = "Wage Premium (%)",
-          color = "Gender"
-        ) +
-        theme_minimal()
-      
-      
-      img_path2 <- tempfile(fileext = ".png")
-      ggsave(img_path2, plot = second_graph, width = 8, height = 6)
-      
-      doc <- doc %>% body_add_par("Public Sector Wage Premium by Gender Over Time", style = "heading 2")
-      doc <- doc %>% body_add_img(src = img_path2, width = 6, height = 4) %>% 
-        body_add_par("Note: This indicator represents the gender wage premium across industries in the public sector.", 
-                     style = "Normal")
-      
-      # Save the Document
-      print(doc, target = file)
-    }
-  )
-  
-  generate_wage_premium_gender_report_section <- function(doc, selected_countries) {
-    
-    cat("[wage-premium] start\n")
-    
-    on.exit({
-      # best-effort cleanup of any temp files we created
-      if (exists("img_path1", inherits = FALSE) && is.character(img_path1)) try(unlink(img_path1), silent = TRUE)
-      if (exists("img_path2", inherits = FALSE) && is.character(img_path2)) try(unlink(img_path2), silent = TRUE)
-    }, add = TRUE)
-    
-    # --- helper: robust numeric from "12.3%" / labels / factors ---
-    to_num <- function(x) {
-      x <- as.character(x)
-      x <- gsub("[^0-9\\.-]", "", x)
-      suppressWarnings(as.numeric(x))
-    }
-    
-    # ---- Guard inputs ----
-    sel <- unique(na.omit(as.character(selected_countries)))
-    sel <- sel[nzchar(sel)]
-    if (length(sel) == 0L) {
-      cat("[wage-premium] no countries selected\n")
-      doc <- body_add_par(doc, "No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    first_country <- sel[1]
-    cat("[wage-premium] first_country:", first_country, "\n")
-    
-    # ---- Title & intro ----
-    doc <- body_add_par(doc, "Public Sector Wage Premium by Gender", style = "heading 1")
-    doc <- body_add_par(
-      doc,
-      "This section presents an analysis of the public sector wage premium by gender across selected countries.",
-      style = "Normal"
-    )
-    
-    # ---- Validate required data frames exist with needed columns ----
-    needed_last <- c("country_name","indicator_label","value_percentage")
-    needed_ts   <- c("country_name","indicator_label","value_percentage","year")
-    
-    if (!exists("gender_wage_premium_last") || !all(needed_last %in% names(gender_wage_premium_last))) {
-      cat("[wage-premium] missing gender_wage_premium_last or columns\n")
-      doc <- body_add_par(doc, "Required data for last-available-year wage premium is missing.", style = "Normal")
-      return(doc)
-    }
-    if (!exists("gender_wage_premium") || !all(needed_ts %in% names(gender_wage_premium))) {
-      cat("[wage-premium] missing gender_wage_premium or columns\n")
-      doc <- body_add_par(doc, "Required time-series wage premium data is missing.", style = "Normal")
-      return(doc)
-    }
-    
-    # ---- Last-available-year data ----
-    cat("[wage-premium] prep last-year data\n")
-    filtered_data <- gender_wage_premium_last %>%
-      dplyr::filter(.data$country_name %in% sel) %>%
-      dplyr::mutate(
-        value_percentage = to_num(.data$value_percentage),
-        indicator_label  = as.character(.data$indicator_label),
-        country_name     = as.character(.data$country_name)
-      ) %>%
-      tidyr::drop_na(.data$value_percentage, .data$indicator_label, .data$country_name) %>%
-      dplyr::filter(is.finite(.data$value_percentage)) %>%
-      dplyr::mutate(indicator_label = factor(.data$indicator_label, levels = c("Male","Female")))
-    
-    if (nrow(filtered_data) < 1L) {
-      cat("[wage-premium] no last-year rows\n")
-      doc <- body_add_par(doc, "No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # ---- helpers for summaries ----
-    get_rounded_value <- function(df, country, indicator) {
-      v <- df %>%
-        dplyr::filter(.data$country_name == country, .data$indicator_label == indicator) %>%
-        dplyr::pull(.data$value_percentage)
-      if (length(v) == 0 || is.na(v[1])) return("Data not available")
-      round(v[1], 0)
-    }
-    get_max_country <- function(df, indicator) {
-      df_f <- df %>% dplyr::filter(.data$indicator_label == indicator)
-      if (nrow(df_f) == 0) return(list(country = "N/A", value = "Data not available"))
-      max_val <- suppressWarnings(max(df_f$value_percentage, na.rm = TRUE))
-      if (!is.finite(max_val)) return(list(country = "N/A", value = "Data not available"))
-      hit <- df_f %>% dplyr::filter(.data$value_percentage == max_val)
-      if (nrow(hit) == 0) return(list(country = "N/A", value = "Data not available"))
-      list(country = hit$country_name[1], value = round(max_val, 0))
-    }
-    
-    male_first_country   <- get_rounded_value(filtered_data, first_country, "Male")
-    female_first_country <- get_rounded_value(filtered_data, first_country, "Female")
-    max_male             <- get_max_country(filtered_data, "Male")
-    max_female           <- get_max_country(filtered_data, "Female")
-    
-    # ---- First Graph ----
-    cat("[wage-premium] first graph\n")
-    first_graph <- ggplot(
-      filtered_data,
-      aes(x = .data$country_name, y = .data$value_percentage, color = .data$indicator_label)
-    ) +
-      geom_point(size = 4) +
-      scale_color_manual(values = c("Male" = "#E69F00", "Female" = "#56B4E9")) +
-      labs(
-        title = "Public Sector Wage Premium by Gender (Last Year Available)",
-        x = "Country", y = "Wage Premium (%)", color = "Gender"
-      ) +
-      theme_minimal()
-    
-    img_path1 <- tempfile(fileext = ".png")
-    ok1 <- TRUE
-    tryCatch(
-      ggsave(img_path1, plot = first_graph, width = 8, height = 6),
-      error = function(e) { ok1 <<- FALSE; cat("[wage-premium] ggsave1 failed:", conditionMessage(e), "\n") }
-    )
-    
-    doc <- body_add_par(doc, "Public Sector Wage Premium by Gender (Last Year Available)", style = "heading 2")
-    if (isTRUE(ok1) && isTRUE(file.exists(img_path1))) {
-      doc <- body_add_img(doc, src = img_path1, width = 6, height = 4)
-    }
-    doc <- body_add_par(
-      doc,
-      paste0(
-        "This graph displays the public sector wage premium by gender for the last available year across the selected countries. ",
-        "In ", first_country, ", the wage premium for male employees is ", male_first_country,
-        "%, while for female employees, it is ", female_first_country, "%. ",
-        "The country with the highest male wage premium is ", max_male$country, " at ", max_male$value,
-        "%, while the highest female wage premium is in ", max_female$country, " at ", max_female$value, "%."
-      ),
-      style = "Normal"
-    )
-    
-    # ---- Time series for first country ----
-    cat("[wage-premium] prep time series\n")
-    ts <- gender_wage_premium %>%
-      dplyr::filter(.data$country_name == first_country) %>%
-      dplyr::mutate(
-        year             = suppressWarnings(as.integer(.data$year)),
-        value_percentage = to_num(.data$value_percentage),
-        indicator_label  = as.character(.data$indicator_label)
-      ) %>%
-      tidyr::drop_na(.data$year, .data$value_percentage, .data$indicator_label) %>%
-      dplyr::filter(is.finite(.data$year), is.finite(.data$value_percentage)) %>%
-      dplyr::mutate(indicator_label = factor(.data$indicator_label, levels = c("Male","Female"))) %>%
-      dplyr::arrange(.data$year)
-    
-    if (nrow(ts) < 1L) {
-      cat("[wage-premium] no time series rows\n")
-      doc <- body_add_par(doc, "No time series data available for this country.", style = "Normal")
-      cat("[wage-premium] done (no ts)\n")
-      return(doc)
-    }
-    
-    cat("[wage-premium] second graph\n")
-    second_graph <- ggplot(
-      ts,
-      aes(x = .data$year, y = .data$value_percentage, color = .data$indicator_label)
-    ) +
-      geom_line(size = 1.2) +
-      geom_point(size = 3) +
-      scale_color_manual(values = c("Male" = "#E69F00", "Female" = "#56B4E9")) +
-      labs(
-        title = paste0("Public Sector Wage Premium by Gender Over Time — ", first_country),
-        x = "Year", y = "Wage Premium (%)", color = "Gender"
-      ) +
-      theme_minimal()
-    
-    img_path2 <- tempfile(fileext = ".png")
-    ok2 <- TRUE
-    tryCatch(
-      ggsave(img_path2, plot = second_graph, width = 8, height = 6),
-      error = function(e) { ok2 <<- FALSE; cat("[wage-premium] ggsave2 failed:", conditionMessage(e), "\n") }
-    )
-    
-    first_year <- 2010L
-    last_year  <- suppressWarnings(max(ts$year, na.rm = TRUE))
-    last_year_ok <- is.finite(last_year) # logical(1) TRUE/FALSE
-    
-    if (!last_year_ok) {
-      cat("[wage-premium] invalid last_year\n")
-      doc <- body_add_par(doc, "Time series found but years are missing/invalid.", style = "Normal")
-      cat("[wage-premium] done (invalid last_year)\n")
-      return(doc)
-    }
-    
-    get_year_value <- function(df, yr, indicator) {
-      v <- df %>%
-        dplyr::filter(.data$year == yr, .data$indicator_label == indicator) %>%
-        dplyr::pull(.data$value_percentage)
-      if (length(v) == 0 || is.na(v[1])) return("Data not available")
-      round(v[1], 0)
-    }
-    
-    male_2010   <- get_year_value(ts, first_year, "Male")
-    female_2010 <- get_year_value(ts, first_year, "Female")
-    male_last   <- get_year_value(ts, last_year,  "Male")
-    female_last <- get_year_value(ts, last_year,  "Female")
-    
-    doc <- body_add_par(doc, "Public Sector Wage Premium by Gender Over Time", style = "heading 2")
-    if (isTRUE(ok2) && isTRUE(file.exists(img_path2))) {
-      doc <- body_add_img(doc, src = img_path2, width = 6, height = 4)
-    }
-    doc <- body_add_par(doc, "Note: This indicator represents the gender wage premium across industries in the public sector.", style = "Normal")
-    doc <- body_add_par(
-      doc,
-      paste0(
-        "This graph illustrates how the public sector wage premium by gender has evolved over time in ", first_country, ". ",
-        "In ", first_year, ", the male wage premium was ", male_2010, "% and the female wage premium was ", female_2010, "%. ",
-        "By ", last_year, ", the male wage premium is ", male_last, "% and the female wage premium is ", female_last, "%."
-      ),
-      style = "Normal"
-    )
-    
-    cat("[wage-premium] done\n")
-    return(doc)
-  }
-  
-  
-  #Slides
-  
-  generate_wage_premium_gender_report_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    first_country <- selected_countries[1]
-    
-    # Filter for last available year (cross-country)
-    filtered_data <- gender_wage_premium_last %>% 
-      filter(country_name %in% selected_countries) %>%
-      drop_na(value_percentage)
-    
-    if (nrow(filtered_data) > 0) {
-      # Graph 1: Public Sector Wage Premium by Gender (Last Year Available)
-      first_graph <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, color = indicator_label)) +
-        geom_point(size = 4) +
-        scale_color_manual(values = c(
-          "Male" = "#E69F00",   # Orange
-          "Female" = "#56B4E9"  # Sky Blue
-        )) +
-        labs(
-          title = "Public Sector Wage Premium by Gender (Last Year Available)",
-          x = "Country", y = "Wage Premium (%)", color = "Gender"
-        ) +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      
-      
-      img_path1 <- tempfile(fileext = ".png")
-      ggsave(img_path1, plot = first_graph, width = 8, height = 6)
-      
-      ppt <- ppt %>%
-        add_slide(layout = "Title and Content", master = "Office Theme") %>%
-        ph_with(external_img(img_path1, height = 5, width = 7), location = ph_location_type(type = "body"))
-    }
-    
-    # Graph 2: Time series for first country
-    time_series_data <- gender_wage_premium %>% 
-      filter(country_name == first_country)
-    
-    if (nrow(time_series_data) > 0) {
-      second_graph <- ggplot(time_series_data, aes(x = year, y = value_percentage, color = indicator_label, group = indicator_label)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(values = c(
-          "Male" = "#E69F00",   # Orange
-          "Female" = "#56B4E9"  # Sky Blue
-        )) +
-        labs(
-          title = paste("Public Sector Wage Premium by Gender Over Time in", first_country),
-          x = "Year", y = "Wage Premium (%)", color = "Gender"
-        ) +
-        theme_minimal()
-      
-      img_path2 <- tempfile(fileext = ".png")
-      ggsave(img_path2, plot = second_graph, width = 8, height = 6)
-      
-      ppt <- ppt %>%
-        add_slide(layout = "Title and Content", master = "Office Theme") %>%
-        ph_with(external_img(img_path2, height = 5, width = 7), location = ph_location_type(type = "body"))
-    }
-    
-    return(ppt)
-  }
-  
-  #Download CVS
-  
-  # ---- Data behind: 
-  # Graph 1 -> gender_wage_premium_last filtered by input$countries_first
-  # Graph 2 -> gender_wage_premium filtered by input$country_second
-  # -----------------------------------------------
-  output$dl_gender_wageprem_xlsx <- downloadHandler(
-    filename = function() paste0("wage_premium_by_gender_", Sys.Date(), ".xlsx"),
-    content = function(file) {
-      
-      # Graph 1: multi-country, last year available
-      d1 <- gender_wage_premium_last %>%
-        dplyr::filter(country_name %in% input$countries_first) %>%
-        tidyr::drop_na(value_percentage) %>%
-        dplyr::transmute(
-          country_name,
-          gender = indicator_label,                    # "Male"/"Female"
-          year   = as.numeric(year),
-          wage_premium_pct = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(country_name, gender)
-      
-      # Graph 2: single country over time
-      d2 <- gender_wage_premium %>%
-        dplyr::filter(country_name == input$country_second) %>%
-        tidyr::drop_na(value_percentage) %>%
-        dplyr::transmute(
-          country_name,
-          gender = indicator_label,
-          year   = as.numeric(year),
-          wage_premium_pct = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(year, gender)
-      
-      writexl::write_xlsx(
-        x = list(
-          "Graph1_MultiCountry_LastYear"  = d1,
-          "Graph2_SingleCountry_OverTime" = d2
-        ),
-        path = file
-      )
-    }
-  )
-  
-  
-  
-  # Gender Workforce Graphs
-  
+  # ── GENDER WORKFORCE ─────────────────────────────────────────────────────────
   output$firstGraphGenderWorkforce <- renderPlotly({
     req(input$countries_gender)
-    
-    # 1) keep only selected countries
-    d <- gender_workforce %>%
-      dplyr::filter(country_name %in% input$countries_gender)
-    
-    if (nrow(d) == 0) {
-      return(plotly::plotly_empty(type = "bar") %>%
-               plotly::layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper", yref = "paper", showarrow = FALSE,
-                   font = list(size = 16), x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white", paper_bgcolor = "white"
-               ))
-    }
-    
-    # 2) for each country & sector, keep the last available year
-    d_last <- d %>%
-      dplyr::group_by(country_name, indicator_name) %>%
-      dplyr::arrange(year, .by_group = TRUE) %>%
-      dplyr::slice_tail(n = 1) %>%           # with_ties = FALSE via arrange+slice_tail
-      dplyr::ungroup()
-    
-    # 3) factor levels for consistent colors
-    d_last$indicator_name <- factor(
-      d_last$indicator_name,
-      levels = c("as a share of private paid employees",
-                 "as a share of public paid employees")
-    )
-    
-    # 4) tooltip
-    d_last$text <- paste0(
-      "Country: ", d_last$country_name,
-      "<br>Sector: ", d_last$indicator_name,
-      "<br>Employment: ", round(d_last$value_percentage, 1), "%",
-      "<br>Year: ", d_last$year
-    )
-    
-    # 5) plot
+    d <- gender_workforce %>% dplyr::filter(country_name %in% input$countries_gender)
+    if (nrow(d)==0) return(plotly_empty(type="bar") %>% layout(title="No data available"))
+    d_last <- d %>% dplyr::group_by(country_name,indicator_name) %>%
+      dplyr::arrange(year,.by_group=TRUE) %>% dplyr::slice_tail(n=1) %>% dplyr::ungroup()
+    d_last$text <- paste0("Country: ",d_last$country_name,"<br>Sector: ",d_last$indicator_name,
+                          "<br>Employment: ",round(d_last$value_percentage,1),"%<br>Year: ",d_last$year)
     plotly::ggplotly(
-      ggplot2::ggplot(
-        d_last,
-        ggplot2::aes(x = country_name, y = value_percentage,
-                     fill = indicator_name, text = text)
-      ) +
-        ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
-        ggplot2::scale_fill_manual(values = c(
-          "as a share of private paid employees" = "#E69F00",
-          "as a share of public paid employees"  = "#56B4E9"
-        )) +
-        ggplot2::labs(
-          title = "Female Employment by Sector (Last Year Available)",
-          x = "Country", y = "Employment (%)", fill = "Sector"
-        ) +
-        ggplot2::theme_minimal(),
-      tooltip = "text"
+      ggplot(d_last, aes(x=country_name, y=value_percentage, fill=indicator_name, text=text)) +
+        geom_col(position=position_dodge(width=0.8),width=0.7) +
+        scale_fill_manual(values=c("as a share of private paid employees"="#E69F00","as a share of public paid employees"="#56B4E9")) +
+        labs(title="Female Employment by Sector (Last Year Available)", x="Country", y="Employment (%)", fill="Sector") +
+        theme_minimal(), tooltip="text"
     )
   })
   
   output$note_firstGraphGenderWorkforce <- renderText({
-    "Note: This indicator represents the share of females employed in the public and private sectors. It highlights gender differences in workforce participation by sector."
+    "Note: Share of females employed in public and private sectors."
   })
   
-  # Second Graph - Single-Country Line Plot
-  
+  # KEY CHANGE: secondGraphGenderWorkforce uses full gender_workforce time series
   output$secondGraphGenderWorkforce <- renderPlotly({
-    filtered_data <- gender_workforce %>% 
-      filter(country_name == input$country_gender)
-    
-    # Show fallback if no data is available
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "scatter") %>%
-               layout(
-                 title = paste("No data available for", input$country_gender),
-                 annotations = list(
-                   text = "No data available for the selected country.",
-                   xref = "paper",
-                   yref = "paper",
-                   showarrow = FALSE,
-                   font = list(size = 16),
-                   x = 0.5,
-                   y = 0.5
-                 ),
-                 plot_bgcolor = "white",
-                 paper_bgcolor = "white"
-               ))
-    }
-    
-    # Ensure factor levels match color scale
-    filtered_data$indicator_name <- factor(filtered_data$indicator_name, 
-                                           levels = c("as a share of private paid employees", 
-                                                      "as a share of public paid employees"))
-    
-    # Create the line chart
+    filtered_data <- gender_workforce %>% filter(country_name==input$country_gender)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
     ggplotly(
-      ggplot(filtered_data, aes(x = year, y = value_percentage, color = indicator_name)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 3) +
-        scale_color_manual(values = c(
-          "as a share of private paid employees" = "#E69F00",  # Orange
-          "as a share of public paid employees" = "#56B4E9"    # Sky Blue
-        )) +
-        labs(
-          title = paste("Female Employment by Sector Over Time in", input$country_gender), 
-          x = "Year", 
-          y = "Female Employment (%)", 
-          color = "Sector"
-        ) +
+      ggplot(filtered_data, aes(x=year, y=value_percentage, color=indicator_name)) +
+        geom_line(size=1.2) + geom_point(size=3) +
+        scale_color_manual(values=c("as a share of private paid employees"="#E69F00","as a share of public paid employees"="#56B4E9")) +
+        labs(title=paste("Female Employment by Sector Over Time in",input$country_gender), x="Year", y="Female Employment (%)", color="Sector") +
         theme_minimal()
     )
   })
   
   output$note_secondGraphGenderWorkforce <- renderText({
-    "Note: This visualization explores female employment in the public and private sectors over time for the selected country. The indicator shows the last year available for each selected country/region/income group(s)."
+    "Note: Female employment in public and private sectors over time for the selected country."
   })
-  
-  # Download Handler - Save Graphs to Word Document
-  output$downloadGraphsWordGender <- downloadHandler(
-    filename = function() paste0("Female_Share_of_Employment_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      
-      req(input$countries_gender, length(input$countries_gender) > 0, input$country_gender)
-      
-      # --- Data ---
-      d1 <- gender_workforce %>%
-        dplyr::filter(country_name %in% input$countries_gender) %>%
-        dplyr::group_by(country_name, indicator_name) %>%
-        dplyr::arrange(year, .by_group = TRUE) %>%
-        dplyr::slice_tail(n = 1) %>%
-        dplyr::ungroup() %>%
-        dplyr::mutate(
-          indicator_name = factor(
-            indicator_name,
-            levels = c("as a share of private paid employees",
-                       "as a share of public paid employees")
-          ),
-          country_name = factor(country_name, levels = input$countries_gender)
-        )
-      req(nrow(d1) > 0, cancelOutput = TRUE)
-      
-      d2 <- gender_workforce %>%
-        dplyr::filter(country_name == input$country_gender) %>%
-        dplyr::mutate(
-          indicator_name = factor(
-            indicator_name,
-            levels = c("as a share of private paid employees",
-                       "as a share of public paid employees")
-          )
-        )
-      req(nrow(d2) > 0, cancelOutput = TRUE)
-      
-      # --- Title (fp_text style you requested) ---
-      first_sel    <- input$countries_gender[1]
-      report_title <- paste0("Female Share of Employment — ", first_sel)
-      
-      title_style <- officer::fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- officer::read_docx() %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext(report_title, prop = title_style))) %>%
-        officer::body_add_par("", style = "Normal")  # spacer
-      
-      # --- Sections ---
-      h2_fmt <- officer::fp_text(font.size = 14, bold = TRUE)
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("Introduction", h2_fmt))) %>%
-        officer::body_add_par(
-          "This report presents the female share of employment in the public and private sectors across selected countries and over time for a selected country.",
-          style = "Normal"
-        ) %>%
-        officer::body_add_fpar(
-          officer::fpar(officer::ftext("1.2 Equity in the Public Sector", h2_fmt))
-        ) %>%
-        officer::body_add_par("", style = "Normal")  # spacer before graphs
-      
-      # --- Graph 1 (last year available) + note ---
-      p1 <- ggplot2::ggplot(
-        d1, ggplot2::aes(x = country_name, y = value_percentage, fill = indicator_name)
-      ) +
-        ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
-        ggplot2::scale_fill_manual(values = c(
-          "as a share of private paid employees" = "#E69F00",
-          "as a share of public paid employees"  = "#56B4E9"
-        ), drop = FALSE, name = "Sector") +
-        ggplot2::labs(
-          title = "Female Employment by Sector (Last Year Available)",
-          x = "Country", y = "Employment (%)"
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-      
-      img1 <- tempfile(fileext = ".png"); ggplot2::ggsave(img1, plot = p1, width = 8, height = 6, dpi = 300)
-      doc <- doc %>%
-        officer::body_add_img(src = img1, width = 6.5, height = 4.8) %>%
-        officer::body_add_par(
-          "Note: For each country, bars show the latest available estimate of the female share of employment in the public and private sectors.",
-          style = "Normal"
-        )
-      
-      # --- Graph 2 (time series) + note ---
-      p2 <- ggplot2::ggplot(
-        d2, ggplot2::aes(x = year, y = value_percentage, color = indicator_name, group = indicator_name)
-      ) +
-        ggplot2::geom_line(size = 1.1) +
-        ggplot2::geom_point(size = 2.8) +
-        ggplot2::scale_color_manual(values = c(
-          "as a share of private paid employees" = "#E69F00",
-          "as a share of public paid employees"  = "#56B4E9"
-        ), drop = FALSE, name = "Sector") +
-        ggplot2::labs(
-          title = paste0("Female Employment Over Time — ", input$country_gender),
-          x = "Year", y = "Employment (%)"
-        ) +
-        ggplot2::theme_minimal()
-      
-      img2 <- tempfile(fileext = ".png"); ggplot2::ggsave(img2, plot = p2, width = 8, height = 6, dpi = 300)
-      doc <- doc %>%
-        officer::body_add_img(src = img2, width = 6.5, height = 4.8) %>%
-        officer::body_add_par(
-          "Note: This figure shows the evolution of the female share of employment in the public and private sectors for the selected country.",
-          style = "Normal"
-        )
-      
-      # --- Write file ---
-      print(doc, target = file)
-    }
-  )
-  
-  
-  generate_gender_workforce_section <- function(doc, selected_countries) {
-    # Add Section Title
-    doc <- doc %>% body_add_par("Gender Workforce Analysis", style = "heading 1")
-    
-    # Add Introduction
-    doc <- doc %>% body_add_par(
-      "This section presents an analysis of female employment in the public and private sectors across selected countries.", 
-      style = "Normal"
-    )
-    
-    # ✅ Ensure at least one country is selected
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Extract the first selected country
-    first_country <- selected_countries[1]
-    
-    # ✅ Filter data for selected countries (last available year)
-    filtered_data <- gender_workforce %>% 
-      filter(country_name %in% selected_countries)
-    
-    # ✅ Handle empty dataset case
-    if (nrow(filtered_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Generate Plot
-    first_graph <- ggplot(filtered_data, 
-                          aes(x = country_name, y = round(value_percentage, 0), fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_manual(values = c(
-        "as a share of private paid employees" = "#E69F00",  # orange
-        "as a share of public paid employees" = "#56B4E9"    # sky blue
-      )) +
-      labs(
-        title = "Female Employment by Sector (Last Year Available)", 
-        x = "Country", y = "Employment (%)", fill = "Sector"
-      ) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    img_path1 <- tempfile(fileext = ".png")
-    ggsave(img_path1, plot = first_graph, width = 8, height = 6)
-    
-    # ✅ Summary Statistics
-    avg_public <- round(mean(filtered_data$value_percentage[filtered_data$indicator_name == "as a share of public paid employees"], na.rm = TRUE), 0)
-    avg_private <- round(mean(filtered_data$value_percentage[filtered_data$indicator_name == "as a share of private paid employees"], na.rm = TRUE), 0)
-    
-    get_country_extreme <- function(data, label, func) {
-      data %>%
-        filter(indicator_name == label, value_percentage == func(value_percentage, na.rm = TRUE)) %>%
-        pull(country_name) %>%
-        first()
-    }
-    
-    highest_public_country <- get_country_extreme(filtered_data, "as a share of public paid employees", max)
-    lowest_public_country  <- get_country_extreme(filtered_data, "as a share of public paid employees", min)
-    highest_private_country <- get_country_extreme(filtered_data, "as a share of private paid employees", max)
-    lowest_private_country  <- get_country_extreme(filtered_data, "as a share of private paid employees", min)
-    
-    # ✅ Extract first country stats
-    get_country_value <- function(data, country, label) {
-      data %>%
-        filter(country_name == country, indicator_name == label) %>%
-        pull(value_percentage) %>%
-        first() %>%
-        coalesce(0) %>%
-        round(0)
-    }
-    
-    first_country_public  <- get_country_value(filtered_data, first_country, "as a share of public paid employees")
-    first_country_private <- get_country_value(filtered_data, first_country, "as a share of private paid employees")
-    
-    # ✅ Comparisons
-    comparison_public <- if (first_country_public > avg_public) {
-      paste0("This is higher than the average of ", avg_public, "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", avg_public, "% across the other selected countries.")
-    }
-    
-    comparison_private <- if (first_country_private > avg_private) {
-      paste0("This is higher than the average of ", avg_private, "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", avg_private, "% across the other selected countries.")
-    }
-    
-    # ✅ Interpretation Text
-    interpretation_text1 <- paste0(
-      "This graph compares female employment in the public and private sectors across selected countries. ",
-      "On average, ", avg_public, "% of public sector employees are female, while in the private sector, the share is ", avg_private, "%. ",
-      "The highest female employment in the public sector is in ", highest_public_country, ", while the lowest is in ", lowest_public_country, ". ",
-      "In the private sector, ", highest_private_country, " has the highest share of female employees, whereas ", lowest_private_country, " has the lowest.\n\n",
-      "In ", first_country, ", female representation in the public sector is ", first_country_public, "%.", 
-      " ", comparison_public, "\n",
-      "In the private sector, female representation in ", first_country, " is ", first_country_private, "%. ",
-      comparison_private
-    )
-    
-    # ✅ Add Content to Word Document
-    doc <- doc %>% 
-      body_add_par("Female Employment by Sector (Last Year Available)", style = "heading 2") %>% 
-      body_add_img(src = img_path1, width = 6, height = 4) %>% 
-      body_add_par(interpretation_text1, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Slides
-  
-  generate_gender_workforce_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter relevant data
-    filtered_data <- gender_workforce %>% 
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(filtered_data) == 0) {
-      return(ppt)
-    }
-    
-    # Create ggplot graph
-    gender_graph <- ggplot(filtered_data, 
-                           aes(x = country_name, y = round(value_percentage, 0), fill = indicator_name)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_manual(
-        values = c(
-          "as a share of private paid employees" = "#E69F00",  # orange
-          "as a share of public paid employees" = "#56B4E9"    # sky blue
-        )
-      ) +
-      labs(
-        title = "Female Employment by Sector (Last Year Available)", 
-        x = "Country", y = "Employment (%)", fill = "Sector"
-      ) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    # Save to PNG
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = gender_graph, width = 8, height = 6, dpi = 300)
-    
-    # Add slide with image only
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  #Download CVS
   
   output$dl_gender_workforce_xlsx <- downloadHandler(
-    filename = function() paste0("female_employment_by_sector_", Sys.Date(), ".xlsx"),
-    content = function(file) {
-      # Graph 1: Multi-country (last year per country & sector)
-      d1 <- gender_workforce %>%
-        dplyr::filter(country_name %in% input$countries_gender) %>%
-        dplyr::group_by(country_name, indicator_name) %>%
-        dplyr::arrange(year, .by_group = TRUE) %>%
-        dplyr::slice_tail(n = 1) %>%
-        dplyr::ungroup() %>%
-        dplyr::transmute(
-          country_name,
-          sector = dplyr::recode(
-            indicator_name,
-            "as a share of private paid employees" = "Private",
-            "as a share of public paid employees"  = "Public",
-            .default = as.character(indicator_name)
-          ),
-          year  = as.numeric(year),
-          female_share_pct = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(country_name, sector)
-      
-      # Graph 2: Single-country over time (both sectors)
-      d2 <- gender_workforce %>%
-        dplyr::filter(country_name == input$country_gender,
-                      indicator_name %in% c("as a share of private paid employees",
-                                            "as a share of public paid employees")) %>%
-        dplyr::transmute(
-          country_name,
-          sector = dplyr::recode(
-            indicator_name,
-            "as a share of private paid employees" = "Private",
-            "as a share of public paid employees"  = "Public"
-          ),
-          year  = as.numeric(year),
-          female_share_pct = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(year, sector)
-      
-      writexl::write_xlsx(
-        x = list(
-          "Graph1_MultiCountry_LastYear"  = d1,
-          "Graph2_SingleCountry_OverTime" = d2
-        ),
-        path = file
-      )
+    filename = function() paste0("female_employment_by_sector_",Sys.Date(),".xlsx"),
+    content  = function(file) {
+      d1 <- gender_workforce %>% dplyr::filter(country_name %in% input$countries_gender) %>%
+        dplyr::group_by(country_name,indicator_name) %>% dplyr::slice_tail(n=1) %>% dplyr::ungroup() %>%
+        dplyr::transmute(country_name, sector=indicator_name, year=as.numeric(year), female_share_pct=as.numeric(value_percentage))
+      d2 <- gender_workforce %>% dplyr::filter(country_name==input$country_gender) %>%
+        dplyr::transmute(country_name, sector=indicator_name, year=as.numeric(year), female_share_pct=as.numeric(value_percentage))
+      writexl::write_xlsx(list("Graph1_MultiCountry_LastYear"=d1,"Graph2_SingleCountry_OverTime"=d2), path=file)
     }
   )
   
-  
-  # Female Leadership 
-  
-  output$barPlotwomen <- renderPlotly({
-    if (is.null(input$selected_countries) || length(input$selected_countries) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No country selected",
-                 annotations = list(
-                   text = "Please select at least one country to view the data.",
-                   xref = "paper", yref = "paper", showarrow = FALSE,
-                   font = list(size = 16), x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white", paper_bgcolor = "white"
-               ))
-    }
-    
-    filtered_data <- gender_leadership %>%
-      dplyr::filter(country_name %in% input$selected_countries) %>%
-      # Order groups as requested
-      dplyr::mutate(
-        indicator_label = factor(
-          indicator_label,
-          levels = c("Clerks-Private", "Clerks-Public", "Managers-Private", "Managers-Public")
-        ),
-        # (optional) keep countries in the order the user selected
-        country_name = factor(country_name, levels = input$selected_countries)
-      )
-    
-    if (nrow(filtered_data) == 0) {
-      return(plotly_empty(type = "bar") %>%
-               layout(
-                 title = "No data available",
-                 annotations = list(
-                   text = "No data available for the selected country/countries.",
-                   xref = "paper", yref = "paper", showarrow = FALSE,
-                   font = list(size = 16), x = 0.5, y = 0.5
-                 ),
-                 plot_bgcolor = "white", paper_bgcolor = "white"
-               ))
-    }
-    
-    # Same hue per occupation; darker tone for Public
-    cols <- c(
-      "Clerks-Private"   = "#9ECAE1",  # light blue
-      "Clerks-Public"    = "#08519C",  # dark blue
-      "Managers-Private" = "#FDAE6B",  # light orange
-      "Managers-Public"  = "#E6550D"   # dark orange
+  # ── GENDER WAGE PREMIUM ───────────────────────────────────────────────────────
+  output$firstGraphGenderWagePremium <- renderPlotly({
+    filtered_data <- gender_wage_premium_last %>% filter(country_name %in% input$countries_first)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
+    ggplotly(
+      ggplot(filtered_data, aes(x=country_name, y=value_percentage, color=indicator_label)) +
+        geom_point(size=4) +
+        scale_color_manual(values=c("Male"="#E69F00","Female"="#56B4E9")) +
+        labs(title="Public Sector Wage Premium by Gender (Last Year Available)", x="Country", y="Wage Premium (%)", color="Gender") +
+        theme_minimal()
     )
-    
-    plot_ly(
-      data   = filtered_data,
-      x      = ~country_name,
-      y      = ~value_percentage,
-      color  = ~indicator_label,
-      colors = cols,
-      type   = "bar",
-      barmode = "group",
-      text = ~paste0(
-        "Country: ", country_name, "<br>",
-        "Group–Sector: ", indicator_label, "<br>",
-        "Female Share: ", round(value_percentage, 1), "%<br>",
-        "Year: ", year
-      ),
-      hoverinfo = "text"
-    ) %>%
-      layout(
-        title = "Females by Occupational Group and Sector",
-        xaxis = list(title = "Country"),
-        yaxis = list(title = "Female Share (%)"),
-        bargap = 0.2,
-        legend = list(traceorder = "normal")  # keep legend in factor order
-      )
   })
   
+  output$note_firstGraphGenderWagePremium <- renderText({
+    "Note: Public sector wage premium for the latest available year. Positive = higher wages in public sector."
+  })
   
+  # KEY CHANGE: secondGraphGenderWagePremium uses gender_wage_premium (full time series)
+  output$secondGraphGenderWagePremium <- renderPlotly({
+    filtered_data <- gender_wage_premium %>% filter(country_name==input$country_second)
+    if (nrow(filtered_data)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
+    ggplotly(
+      ggplot(filtered_data, aes(x=year, y=value_percentage, color=indicator_label)) +
+        geom_line(size=1.2) + geom_point(size=3) +
+        scale_color_manual(values=c("Male"="#E69F00","Female"="#56B4E9")) +
+        labs(title="Public Sector Wage Premium by Gender Over Time", x="Year", y="Wage Premium (%)", color="Gender") +
+        theme_minimal()
+    )
+  })
+  
+  output$note_secondGraphGenderWagePremium <- renderText({
+    "Note: Public sector wage premium for men and women over time compared to private sector."
+  })
+  
+  output$dl_gender_wageprem_xlsx <- downloadHandler(
+    filename = function() paste0("wage_premium_by_gender_",Sys.Date(),".xlsx"),
+    content  = function(file) {
+      d1 <- gender_wage_premium_last %>% dplyr::filter(country_name %in% input$countries_first) %>%
+        dplyr::transmute(country_name, gender=indicator_label, year=as.numeric(year), wage_premium_pct=as.numeric(value_percentage))
+      d2 <- gender_wage_premium %>% dplyr::filter(country_name==input$country_second) %>%
+        dplyr::transmute(country_name, gender=indicator_label, year=as.numeric(year), wage_premium_pct=as.numeric(value_percentage))
+      writexl::write_xlsx(list("Graph1_MultiCountry_LastYear"=d1,"Graph2_SingleCountry_OverTime"=d2), path=file)
+    }
+  )
+  
+  # ── FEMALE LEADERSHIP ────────────────────────────────────────────────────────
+  output$barPlotwomen <- renderPlotly({
+    if (is.null(input$selected_countries)||length(input$selected_countries)==0)
+      return(plotly_empty(type="bar") %>% layout(title="No country selected"))
+    filtered_data <- gender_leadership %>% dplyr::filter(country_name %in% input$selected_countries) %>%
+      dplyr::mutate(indicator_label=factor(indicator_label,levels=c("Clerks-Private","Clerks-Public","Managers-Private","Managers-Public")))
+    if (nrow(filtered_data)==0) return(plotly_empty(type="bar") %>% layout(title="No data available"))
+    cols <- c("Clerks-Private"="#9ECAE1","Clerks-Public"="#08519C","Managers-Private"="#FDAE6B","Managers-Public"="#E6550D")
+    plot_ly(data=filtered_data, x=~country_name, y=~value_percentage, color=~indicator_label, colors=cols,
+            type="bar", barmode="group",
+            text=~paste0("Country: ",country_name,"<br>Group: ",indicator_label,"<br>Female Share: ",round(value_percentage,1),"%"),
+            hoverinfo="text") %>%
+      layout(title="Females by Occupational Group and Sector", xaxis=list(title="Country"), yaxis=list(title="Female Share (%)"))
+  })
   
   output$note_barPlotwomen <- renderText({
-    "Note: This indicator represents the share of females in different occupational groups (Managers/Clerks) in both the public and private sectors, highlighting gender representation disparities. The indicator shows the last year available for each selected country/region/income group(s)."
+    "Note: Share of females in Managers/Clerks in public and private sectors. Shows last year available."
   })
-  
-  output$downloadGraphsWordfemale <- downloadHandler(
-    filename = function() paste0("Females_Occupation_Groups_Analysis_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      
-      req(input$selected_countries, length(input$selected_countries) > 0)
-      
-      # --- Title (same style as your other report) ---
-      first_sel    <- input$selected_countries[1]
-      report_title <- paste0("Females by Occupational Group and Sector — ", first_sel)
-      
-      title_style <- officer::fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      doc <- officer::read_docx() %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext(report_title, prop = title_style))) %>%
-        officer::body_add_par("", style = "Normal")  # spacer
-      
-      # --- Section heading style ---
-      h2_fmt <- officer::fp_text(font.size = 14, bold = TRUE)
-      
-      # --- Introduction ---
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("Introduction", h2_fmt))) %>%
-        officer::body_add_par(
-          "This report presents an analysis of female representation in Managers and Clerks across public and private sectors for the selected countries.",
-          style = "Normal"
-        ) %>%
-        officer::body_add_par("", style = "Normal") %>%
-        # >>> Your requested subsection <<<
-        officer::body_add_fpar(
-          officer::fpar(officer::ftext("1.2 Equity in the Public Sector", h2_fmt))
-        ) %>%
-        officer::body_add_par("", style = "Normal")  # spacer before graphs
-      
-      # --- Data ---
-      filtered_data <- gender_leadership %>%
-        dplyr::filter(country_name %in% input$selected_countries) %>%
-        dplyr::mutate(
-          indicator_label = factor(
-            indicator_label,
-            levels = c("Clerks-Private", "Clerks-Public", "Managers-Private", "Managers-Public")
-          ),
-          country_name = factor(country_name, levels = input$selected_countries)
-        )
-      req(nrow(filtered_data) > 0, cancelOutput = TRUE)
-      
-      # --- Colors (same hue per occupation; darker for Public) ---
-      cols <- c(
-        "Clerks-Private"   = "#9ECAE1",  # light blue
-        "Clerks-Public"    = "#08519C",  # dark blue
-        "Managers-Private" = "#FDAE6B",  # light orange
-        "Managers-Public"  = "#E6550D"   # dark orange
-      )
-      
-      # --- Plot (ggplot -> PNG) ---
-      p <- ggplot2::ggplot(
-        filtered_data,
-        ggplot2::aes(x = country_name, y = value_percentage, fill = indicator_label)
-      ) +
-        ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
-        ggplot2::scale_fill_manual(
-          values = cols,
-          drop   = FALSE,
-          name   = "Group–Sector",
-          breaks = c("Clerks-Private", "Clerks-Public", "Managers-Private", "Managers-Public"),
-          labels = c("Clerks — Private", "Clerks — Public", "Managers — Private", "Managers — Public")
-        ) +
-        ggplot2::labs(
-          title = "Females by Occupational Group and Sector",
-          x = "Country", y = "Female Share (%)"
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-      
-      img_path <- tempfile(fileext = ".png")
-      ggplot2::ggsave(img_path, plot = p, width = 8, height = 6, dpi = 300)
-      
-      # --- Add image + note ---
-      doc <- doc %>%
-        officer::body_add_img(src = img_path, width = 6.5, height = 4.8) %>%
-        officer::body_add_par(
-          "Note: Bars are ordered as Clerks–Private, Clerks–Public, Managers–Private, Managers–Public. Blue tones denote Clerks (Public is darker); orange tones denote Managers (Public is darker).",
-          style = "Normal"
-        )
-      
-      print(doc, target = file)
-    }
-  )
-  
-  generate_females_occupation_groups_section <- function(doc, selected_countries) {
-    # Add Section Title
-    doc <- doc %>% body_add_par("Females by Occupational Group and Sector", style = "heading 1")
-    
-    # Add Introduction
-    doc <- doc %>% body_add_par(
-      "This section presents an analysis of female representation in different occupational groups across selected countries.", 
-      style = "Normal"
-    )
-    
-    # ✅ Ensure at least one country is selected
-    if (is.null(selected_countries) || length(selected_countries) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Extract the first selected country
-    first_country <- selected_countries[1]
-    if (is.na(first_country)) first_country <- "Unknown Country"
-    
-    # ✅ Filter data for selected countries
-    filtered_data <- gender_leadership %>% filter(country_name %in% selected_countries)
-    
-    # ✅ Handle empty dataset case
-    if (nrow(filtered_data) == 0) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Generate ggplot for Female Occupational Groups
-    ggplot_obj <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_label)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_viridis_d(option = "D", name = "Occupation") +
-      labs(
-        title = "Females by Occupational Group and Sector",
-        x = "Country", 
-        y = "Female Share (%)"
-      ) +
-      theme_minimal()
-    
-    # ✅ Save the plot as an image
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = ggplot_obj, width = 8, height = 6)
-    
-    # ✅ Extract summary statistics
-    highest_public_managers <- filtered_data %>%
-      filter(indicator_label == "Managers-Public") %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    lowest_public_managers <- filtered_data %>%
-      filter(indicator_label == "Managers-Public") %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    highest_private_managers <- filtered_data %>%
-      filter(indicator_label == "Managers-Private") %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    lowest_private_managers <- filtered_data %>%
-      filter(indicator_label == "Managers-Private") %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    highest_public_clerks <- filtered_data %>%
-      filter(indicator_label == "Clerks-Public") %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    lowest_public_clerks <- filtered_data %>%
-      filter(indicator_label == "Clerks-Public") %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    highest_private_clerks <- filtered_data %>%
-      filter(indicator_label == "Clerks-Private") %>%
-      filter(value_percentage == max(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    lowest_private_clerks <- filtered_data %>%
-      filter(indicator_label == "Clerks-Private") %>%
-      filter(value_percentage == min(value_percentage, na.rm = TRUE)) %>%
-      pull(country_name) %>%
-      first()
-    
-    # ✅ Round averages to 1 decimal place
-    avg_public_managers <- round(mean(filtered_data$value_percentage[filtered_data$indicator_label == "Managers-Public"], na.rm = TRUE), 1)
-    avg_private_managers <- round(mean(filtered_data$value_percentage[filtered_data$indicator_label == "Managers-Private"], na.rm = TRUE), 1)
-    avg_public_clerks <- round(mean(filtered_data$value_percentage[filtered_data$indicator_label == "Clerks-Public"], na.rm = TRUE), 1)
-    avg_private_clerks <- round(mean(filtered_data$value_percentage[filtered_data$indicator_label == "Clerks-Private"], na.rm = TRUE), 1)
-    
-    # ✅ Extract employment levels for the first country and comparison
-    first_country_public_managers <- filtered_data %>%
-      filter(country_name == first_country, indicator_label == "Managers-Public") %>%
-      pull(value_percentage) %>%
-      first() %>%
-      coalesce(0) %>%
-      round(1)
-    
-    first_country_private_managers <- filtered_data %>%
-      filter(country_name == first_country, indicator_label == "Managers-Private") %>%
-      pull(value_percentage) %>%
-      first() %>%
-      coalesce(0) %>%
-      round(1)
-    
-    # ✅ Compare first country with others
-    comparison_public_managers <- if (first_country_public_managers > avg_public_managers) {
-      paste0("This is higher than the average of ", format(avg_public_managers, nsmall = 1), "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", format(avg_public_managers, nsmall = 1), "% across the other selected countries.")
-    }
-    
-    comparison_private_managers <- if (first_country_private_managers > avg_private_managers) {
-      paste0("This is higher than the average of ", format(avg_private_managers, nsmall = 1), "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", format(avg_private_managers, nsmall = 1), "% across the other selected countries.")
-    }
-    
-    interpretation_text <- paste0(
-      "This graph compares female representation in different occupational groups across selected countries. ",
-      "On average,", avg_public_managers, "% of public sector managers are female, while in the private sector, female managers account for ", avg_private_managers, "%. ",
-      "The highest female representation among public sector managers is in ", highest_public_managers, ", whereas the lowest is in  ", lowest_public_managers, ". ",
-      "In the private sector, the highest female manager share is in ", highest_private_managers, ", while the lowest is in ", lowest_private_managers, ".\n\n",
-      "In ", first_country, ", female managers account for ", first_country_public_managers, "% in the public sector. ", 
-      comparison_public_managers, "\n",
-      "In the private sector, female managers in ", first_country, " represent ", first_country_private_managers, "%. ",
-      comparison_private_managers
-    )
-    
-    # ✅ Add Image and Interpretation to the Document
-    doc <- doc %>% 
-      body_add_img(src = img_path, width = 6, height = 4) %>% 
-      body_add_par("This graph shows the share of females in various occupational groups (Managers/Clerks) in the public and private sectors for the selected countries.", style = "Normal") %>%
-      body_add_par(interpretation_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  generate_females_occupation_groups_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter the data
-    filtered_data <- gender_leadership %>% 
-      filter(country_name %in% selected_countries)
-    
-    if (nrow(filtered_data) == 0) {
-      return(ppt)  # no data to plot
-    }
-    
-    # Plot
-    ggplot_obj <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_label)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_viridis_d(option = "D", name = "Occupation") +
-      labs(
-        title = "Females by Occupational Group and Sector",
-        x = "Country", 
-        y = "Female Share (%)"
-      ) +
-      theme_minimal()
-    
-    # Save as image
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = ggplot_obj, width = 8, height = 6, dpi = 300)
-    
-    # Add to PowerPoint
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  #Download CVS
   
   output$dl_csv_female_leadership <- downloadHandler(
-    filename = function() paste0("female_leadership_occupation_sector_", Sys.Date(), ".csv"),
+    filename = function() paste0("female_leadership_occupation_sector_",Sys.Date(),".csv"),
     content  = function(file) {
-      # empty schema to avoid blank file issues
-      empty_schema <- tibble::tibble(
-        country_name      = character(),
-        group_sector      = character(),
-        year              = integer(),
-        female_share_pct  = numeric()
-      )
-      
-      if (is.null(input$selected_countries) || !length(input$selected_countries)) {
-        utils::write.csv(empty_schema, file, row.names = FALSE, na = "")
-        return()
+      if (is.null(input$selected_countries)||!length(input$selected_countries)) {
+        utils::write.csv(data.frame(), file, row.names=FALSE); return()
       }
-      
-      d <- gender_leadership %>%
-        dplyr::filter(country_name %in% input$selected_countries) %>%
-        dplyr::mutate(
-          indicator_label = factor(
-            indicator_label,
-            levels = c("Clerks-Private", "Clerks-Public", "Managers-Private", "Managers-Public")
-          ),
-          country_name = factor(country_name, levels = input$selected_countries)
-        ) %>%
-        # Keep the latest year per country & group-sector (matches what users usually expect)
-        dplyr::arrange(country_name, indicator_label, dplyr::desc(year)) %>%
-        dplyr::group_by(country_name, indicator_label) %>%
-        dplyr::slice_head(n = 1) %>%
-        dplyr::ungroup() %>%
-        dplyr::transmute(
-          country_name     = as.character(country_name),
-          group_sector     = as.character(indicator_label),
-          year             = as.integer(year),
-          female_share_pct = as.numeric(value_percentage)
-        )
-      
-      if (nrow(d) == 0) d <- empty_schema
-      utils::write.csv(d, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
+      d <- gender_leadership %>% dplyr::filter(country_name %in% input$selected_countries) %>%
+        dplyr::group_by(country_name,indicator_label) %>% dplyr::slice_max(order_by=year,n=1,with_ties=FALSE) %>% dplyr::ungroup() %>%
+        dplyr::transmute(country_name=as.character(country_name), group_sector=as.character(indicator_label), year=as.integer(year), female_share_pct=as.numeric(value_percentage))
+      utils::write.csv(d,file,row.names=FALSE,na="")
     }
   )
   
-  
-  #Gender Wage premium in the public sector, by industry 
+  # ── GENDER WAGE PREMIUM BY INDUSTRY ──────────────────────────────────────────
   output$gender_wage_barplot <- renderPlot({
-    
-    # Filter data based on user selection
     filtered_data <- gender_wage_premiumpublic %>%
-      filter(country_name %in% input$selected_countries, 
-             indicator_label %in% c("Public Administration", 
-                                    "Education", 
-                                    "Health", 
-                                    "Other")) 
-    
-    # Fallback if no data
-    if (nrow(filtered_data) == 0) {
-      return(
-        ggplot() + 
-          theme_void() +
-          annotate("text", x = 0.5, y = 0.5, label = "No data available for the selected country/countries.",
-                   size = 6, color = "grey", hjust = 0.5, vjust = 0.5)
-      )
-    }
-    
-    # Create actual ggplot
-    ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_label)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_viridis_d(name = "Indicator", option = "D") +
-      labs(
-        title = "Gender Wage Premium in Public Sector by Industry",
-        x = "Country", y = "Wage Premium (%)"
-      ) +
-      theme_minimal() +
-      annotate("text", x = Inf, y = min(filtered_data$value_percentage, na.rm = TRUE) - 5, 
-               label = "", 
-               hjust = 1, size = 4, color = "black", fontface = "italic")
+      filter(country_name %in% input$selected_countries, indicator_label %in% c("Public Administration","Education","Health","Other"))
+    if (nrow(filtered_data)==0) return(ggplot()+theme_void()+annotate("text",x=0.5,y=0.5,label="No data available",size=6,color="grey"))
+    ggplot(filtered_data, aes(x=country_name, y=value_percentage, fill=indicator_label)) +
+      geom_bar(stat="identity",position="dodge") + scale_fill_viridis_d(name="Indicator",option="D") +
+      labs(title="Gender Wage Premium in Public Sector by Industry", x="Country", y="Wage Premium (%)") + theme_minimal()
   })
-  
   
   output$note_gender_wage_barplot <- renderText({
-    "Note: This indicator represents the gender wage premium in the public sector across different industries, comparing wages of female employees to male employees."
+    "Note: Gender wage premium in the public sector across industries, comparing female to male employees."
   })
   
-  
-  # Download Handler for Word Document
-  
-  output$downloadGenderWagePremium <- downloadHandler(
-    filename = function() paste0("Gender_Wage_Premium_Report_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      
-      # --- Inputs & title ---
-      req(input$selected_countries, length(input$selected_countries) > 0)
-      first_sel    <- input$selected_countries[1]
-      report_title <- paste0("Gender Wage Premium in Public Sector by Industry — ", first_sel)
-      
-      # --- Doc + Title (same style) ---
-      title_style <- officer::fp_text(color = "#722F37", font.size = 16, bold = TRUE)
-      h2_fmt      <- officer::fp_text(font.size = 14, bold = TRUE)
-      
-      doc <- officer::read_docx() %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext(report_title, prop = title_style))) %>%
-        officer::body_add_par("", style = "Normal") %>%
-        # Sections
-        officer::body_add_fpar(officer::fpar(officer::ftext("Introduction", h2_fmt))) %>%
-        officer::body_add_par(
-          "This report presents an analysis of the gender wage premium in the public sector by industry (Core Public Administration, Education, and Health) across the selected countries.",
-          style = "Normal"
-        ) %>%
-        officer::body_add_par("", style = "Normal") %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("1.2 Equity in the Public Sector", h2_fmt))) %>%
-        officer::body_add_par("", style = "Normal")   # spacer before figure
-      
-      # --- Data ---
-      filtered_data <- gender_wage_premiumpublic %>%
-        dplyr::filter(
-          country_name %in% input$selected_countries,
-          indicator_name %in% c(
-            "Gender wage premium in the public sector, by industry: Public Administration (compared to male paid employees)",
-            "Gender wage premium in the public sector, by industry: Education (compared to male paid employees)",
-            "Gender wage premium in the public sector, by industry: Health (compared to male paid employees)",
-            ""
-          )
-        ) %>%
-        dplyr::mutate(
-          indicator_label = dplyr::case_when(
-            indicator_name == "Gender wage premium in the public sector, by industry: Public Administration (compared to male paid employees)" ~ "Core Public Administration",
-            indicator_name == "Gender wage premium in the public sector, by industry: Education (compared to male paid employees)"            ~ "Education",
-            indicator_name == "Gender wage premium in the public sector, by industry: Health (compared to male paid employees)"               ~ "Health",
-            indicator_name == ""                                                                                                         ~ "Other",
-            TRUE ~ NA_character_
-          ),
-          indicator_label = factor(
-            indicator_label,
-            levels = c("Core Public Administration", "Education", "Health")
-          ),
-          country_name = factor(country_name, levels = input$selected_countries)
-        ) %>%
-        tidyr::drop_na(value_percentage, indicator_label)
-      
-      req(nrow(filtered_data) > 0, cancelOutput = TRUE)
-      
-      # --- Plot (ggplot -> PNG) ---
-      p <- ggplot2::ggplot(
-        filtered_data,
-        ggplot2::aes(x = country_name, y = value_percentage, fill = indicator_label)
-      ) +
-        ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.7) +
-        # keep your palette or swap to a manual one if you prefer
-        ggplot2::scale_fill_viridis_d(option = "D", name = "Industry", drop = FALSE) +
-        ggplot2::labs(
-          title = "Gender Wage Premium in the Public Sector by Industry",
-          x = "Country", y = "Wage Premium (%)"
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
-      
-      img_path <- tempfile(fileext = ".png")
-      ggplot2::ggsave(img_path, plot = p, width = 8, height = 6, dpi = 300)
-      
-      # --- Add image + note ---
-      doc <- doc %>%
-        officer::body_add_img(src = img_path, width = 6.5, height = 4.8) %>%
-        officer::body_add_par(
-          "Note: Bars show the estimated gender wage premium for women relative to men in the public sector, by industry. Positive values indicate higher wages relative to male paid employees; negative values indicate lower.",
-          style = "Normal"
-        )
-      
-      # --- Write file ---
-      print(doc, target = file)
-    }
-  )
-  
-  generate_gender_wage_premiumbysector_section <- function(doc, selected_countries) {
-    # Section Title
-    doc <- doc %>% body_add_par("Gender Wage Premium in Public Sector by Industry", style = "heading 1")
-    
-    # Intro Text
-    doc <- doc %>% body_add_par(
-      "This section presents an analysis of gender wage premiums in the public sector by industry 
-    (Public Administration, Education, and Health) across selected countries.", 
-      style = "Normal"
-    )
-    
-    # ✅ Validate selected countries
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      doc <- doc %>% body_add_par("No countries selected for analysis.", style = "Normal")
-      return(doc)
-    }
-    
-    first_country <- selected_countries[1]
-    if (is.na(first_country)) {
-      doc <- doc %>% body_add_par("Invalid country selection.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Filter and label the data
-    filtered_data <- gender_wage_premiumpublic %>%
-      filter(country_name %in% selected_countries,
-             indicator_name %in% c(
-               "Gender wage premium in the public sector, by industry: Public Administration (compared to male paid employees)", 
-               "Gender wage premium in the public sector, by industry: Education (compared to male paid employees)", 
-               "Gender wage premium in the public sector, by industry: Health (compared to male paid employees)"
-             ))
-    
-    if (nrow(filtered_data) == 0 || all(is.na(filtered_data$value_percentage))) {
-      doc <- doc %>% body_add_par("No data available for the selected countries.", style = "Normal")
-      return(doc)
-    }
-    
-    # ✅ Clean labels
-    filtered_data$indicator_label <- recode(filtered_data$indicator_name,
-                                            "Gender wage premium in the public sector, by industry: Public Administration (compared to male paid employees)" = "Public Administration",
-                                            "Gender wage premium in the public sector, by industry: Education (compared to male paid employees)" = "Education",
-                                            "Gender wage premium in the public sector, by industry: Health (compared to male paid employees)" = "Health"
-    )
-    
-    # ✅ Plot
-    gender_wage_plot <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_label)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_viridis_d(option = "D") +  # Options: "D", "C", "E", etc.
-      labs(
-        title = "Gender Wage Premium in Public Sector by Industry",
-        x = "Country", y = "Wage Premium (%)", fill = "Industry"
-      ) +
-      theme_minimal()
-    
-    # ✅ Save plot
-    img_path <- tempfile(fileext = ".png")
-    ggsave(img_path, plot = gender_wage_plot, width = 8, height = 6, dpi = 300)
-    
-    # ✅ Utility functions
-    safe_max <- function(x) ifelse(all(is.na(x)), NA, max(x, na.rm = TRUE))
-    safe_min <- function(x) ifelse(all(is.na(x)), NA, min(x, na.rm = TRUE))
-    safe_mean <- function(x) ifelse(all(is.na(x)), 0, round(mean(x, na.rm = TRUE), 0))
-    
-    # ✅ Stats by sector
-    get_extreme <- function(data, label, func) {
-      data %>%
-        filter(indicator_label == label, value_percentage == func(value_percentage)) %>%
-        pull(country_name) %>%
-        first() %>%
-        coalesce("N/A")
-    }
-    
-    highest_admin    <- get_extreme(filtered_data, "Public Administration", safe_max)
-    lowest_admin     <- get_extreme(filtered_data, "Public Administration", safe_min)
-    highest_education <- get_extreme(filtered_data, "Education", safe_max)
-    lowest_education  <- get_extreme(filtered_data, "Education", safe_min)
-    highest_health    <- get_extreme(filtered_data, "Health", safe_max)
-    lowest_health     <- get_extreme(filtered_data, "Health", safe_min)
-    
-    # ✅ Means
-    avg_admin    <- safe_mean(filtered_data$value_percentage[filtered_data$indicator_label == "Public Administration"])
-    avg_education <- safe_mean(filtered_data$value_percentage[filtered_data$indicator_label == "Education"])
-    avg_health    <- safe_mean(filtered_data$value_percentage[filtered_data$indicator_label == "Health"])
-    
-    # ✅ First country values
-    first_country_admin <- filtered_data %>%
-      filter(country_name == first_country, indicator_label == "Public Administration") %>%
-      pull(value_percentage) %>%
-      first() %>%
-      coalesce(0) %>%
-      round(0)
-    
-    first_country_education <- filtered_data %>%
-      filter(country_name == first_country, indicator_label == "Education") %>%
-      pull(value_percentage) %>%
-      first() %>%
-      coalesce(0) %>%
-      round(0)
-    
-    comparison_admin <- if (first_country_admin > avg_admin) {
-      paste0("This is higher than the average of ", avg_admin, "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", avg_admin, "% across the other selected countries.")
-    }
-    
-    comparison_education <- if (first_country_education > avg_education) {
-      paste0("This is higher than the average of ", avg_education, "% across the other selected countries.")
-    } else {
-      paste0("This is lower than the average of ", avg_education, "% across the other selected countries.")
-    }
-    
-    # ✅ Interpretation
-    interpretation_text <- paste0(
-      "This graph compares the gender wage premium in the public sector across different industries. ",
-      "On average, the wage premium in Public Administration is ", avg_admin, "%, in Education it is ", avg_education, "%, ",
-      "and in Health it is ", avg_health, "%.\n\n",
-      "The highest wage premium in Public Administration is in ", highest_admin, ", while the lowest is in ", lowest_admin, ". ",
-      "In Education, the highest wage premium is observed in ", highest_education, ", whereas the lowest is in ", lowest_education, ". ",
-      "For Health, the highest gender wage premium is in ", highest_health, ", while the lowest is in ", lowest_health, ".\n\n",
-      "In ", first_country, ", the wage premium in Public Administration is ", first_country_admin, "%. ", 
-      comparison_admin, "\n",
-      "In Education, the wage premium in ", first_country, " is ", first_country_education, "%. ",
-      comparison_education
-    )
-    
-    # ✅ Add content to doc
-    doc <- doc %>%
-      body_add_img(src = img_path, width = 6, height = 4) %>%
-      body_add_par("This graph shows the gender wage premium in the public sector across different industries.", style = "Normal") %>%
-      body_add_par(interpretation_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  
-  generate_gender_wage_premiumbysector_slide <- function(ppt, selected_countries) {
-    if (is.null(selected_countries) || length(na.omit(selected_countries)) == 0) {
-      return(ppt)
-    }
-    
-    # Filter relevant indicators
-    filtered_data <- gender_wage_premiumpublic %>%
-      filter(
-        country_name %in% selected_countries,
-        indicator_name %in% c(
-          "Gender wage premium in the public sector, by industry: Public Administration (compared to male paid employees)",
-          "Gender wage premium in the public sector, by industry: Education (compared to male paid employees)",
-          "Gender wage premium in the public sector, by industry: Health (compared to male paid employees)"
-        )
-      )
-    
-    if (nrow(filtered_data) == 0 || all(is.na(filtered_data$value_percentage))) {
-      return(ppt)  # no data to plot
-    }
-    
-    # Rename for labels
-    filtered_data$indicator_label <- recode(
-      filtered_data$indicator_name,
-      "Gender wage premium in the public sector, by industry: Public Administration (compared to male paid employees)" = "Public Administration",
-      "Gender wage premium in the public sector, by industry: Education (compared to male paid employees)" = "Education",
-      "Gender wage premium in the public sector, by industry: Health (compared to male paid employees)" = "Health"
-    )
-    
-    # Create ggplot graph
-    gender_wage_plot <- ggplot(filtered_data, aes(x = country_name, y = value_percentage, fill = indicator_label)) +
-      geom_bar(stat = "identity", position = "dodge") +
-      scale_fill_viridis_d(option = "D") +  # Discrete viridis scale
-      labs(
-        title = "Gender Wage Premium in Public Sector by Industry",
-        x = "Country", y = "Wage Premium (%)", fill = "Industry"
-      ) +
-      theme_minimal()
-    
-    # Save to PNG
-    img_path <- tempfile(fileext = ".png")
-    ggsave(filename = img_path, plot = gender_wage_plot, width = 8, height = 6, dpi = 300)
-    
-    # Add slide with image only
-    ppt <- ppt %>%
-      add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      ph_with(external_img(img_path, height = 5, width = 7), location = ph_location_type(type = "body"))
-    
-    return(ppt)
-  }
-  
-  
-  generate_intro_section <- function(doc, selected_countries) {
-    # ✅ Use first selected country safely
-    first_country <- if (!is.null(selected_countries) && length(selected_countries) > 0 && !is.na(selected_countries[1])) {
-      selected_countries[1]
-    } else {
-      "Unknown Country"
-    }
-    
-    # ✅ Try to detect World Bank region
-    first_region <- countrycode(first_country, origin = "country.name", destination = "region")
-    if (is.na(first_region)) {
-      first_region <- "its respective region"
-    }
-    
-    # ✅ Define styles
-    title_style <- fp_text(color = "#722F37", font.size = 20, bold = TRUE)
-    subtitle_style <- fp_text(color = "black", font.size = 16, bold = TRUE)
-    
-    # ✅ Add formatted title
-    doc <- doc %>% 
-      body_add_fpar(fpar(ftext(first_country, prop = title_style))) %>% 
-      body_add_fpar(fpar(ftext("Wage Bill and Public Employment Analysis", prop = subtitle_style)))
-    
-    # ✅ Construct intro text
-    intro_text <- paste0(
-      "This note presents evidence on public sector employment and compensation practices in ", first_country,
-      " using the Worldwide Bureaucracy Indicators (WWBI). The primary data source is the Labor Force Survey, conducted by the National Statistics Office. ",
-      "For international comparisons, peer countries from ", first_region, " are included.",
-      "\n\n",
-      "The public sector is typically a major source of employment in most countries. ",
-      "The provision of basic services such as education, health, citizen security, and justice, among others, ",
-      "makes it a central actor in labor markets, with significant impacts on the aggregate results of employment, ",
-      "wages, informality, and other economic variables. Moreover, public employment is an indicator of the state’s ",
-      "participation in the entire economy, which has implications for macroeconomic balances, allocation efficiency, ",
-      "and income distribution. Thus, this analysis comprehensively documents the size of public employment, ",
-      "its changes over time, and the characteristics of its workforce.",
-      "\n\n",
-      "This work documents and analyzes the size, composition, and changes in the levels of employment and wages of ", 
-      first_country, "’s public employees compared to the private sector and how these metrics compare to regional peers."
-    )
-    
-    # ✅ Add intro text to the document
-    doc <- doc %>% body_add_par(intro_text, style = "Normal")
-    
-    return(doc)
-  }
-  
-  #Download cvs
-  
   output$dl_csv_gender_wage_industry <- downloadHandler(
-    filename = function() paste0("gender_wage_premium_public_by_industry_", Sys.Date(), ".csv"),
+    filename = function() paste0("gender_wage_premium_public_by_industry_",Sys.Date(),".csv"),
     content  = function(file) {
-      # empty schema so the file isn't structurally blank if no data
-      empty_schema <- tibble::tibble(
-        country_name        = character(),
-        industry            = character(),
-        year                = integer(),
-        wage_premium_pct    = numeric()
-      )
-      
-      # guard: need selections
-      if (is.null(input$selected_countries) || !length(input$selected_countries)) {
-        utils::write.csv(empty_schema, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
-        return()
+      if (is.null(input$selected_countries)||!length(input$selected_countries)) {
+        utils::write.csv(data.frame(),file,row.names=FALSE,na=""); return()
       }
-      
-      # industries shown in the chart
-      keep_inds <- c("Public Administration", "Education", "Health", "Other")
-      
-      d <- gender_wage_premiumpublic %>%
-        dplyr::filter(
-          country_name %in% input$selected_countries,
-          indicator_label %in% keep_inds
-        )
-      
-      if (nrow(d) == 0) {
-        utils::write.csv(empty_schema, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
-        return()
-      }
-      
-      # match the chart’s “one bar per country & industry” by taking the latest year
-      d_out <- d %>%
-        dplyr::group_by(country_name, indicator_label) %>%
-        dplyr::slice_max(order_by = year, n = 1, with_ties = FALSE) %>%
-        dplyr::ungroup() %>%
-        dplyr::transmute(
-          country_name,
-          industry         = indicator_label,
-          year             = as.integer(year),
-          wage_premium_pct = as.numeric(value_percentage)
-        ) %>%
-        dplyr::arrange(country_name, industry)
-      
-      if (nrow(d_out) == 0) d_out <- empty_schema
-      utils::write.csv(d_out, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
+      d <- gender_wage_premiumpublic %>% dplyr::filter(country_name %in% input$selected_countries, indicator_label %in% c("Public Administration","Education","Health","Other")) %>%
+        dplyr::group_by(country_name,indicator_label) %>% dplyr::slice_max(order_by=year,n=1,with_ties=FALSE) %>% dplyr::ungroup() %>%
+        dplyr::transmute(country_name, industry=indicator_label, year=as.integer(year), wage_premium_pct=as.numeric(value_percentage))
+      utils::write.csv(d,file,row.names=FALSE,na="")
     }
   )
   
-  
-  
-  #Pay compression 
-  
+  # ── PAY COMPRESSION ───────────────────────────────────────────────────────────
   output$paycompression_plot <- renderPlotly({
     req(input$countries_first)
-    
-    # 1) Filter + coerce columns to numeric (handles list-columns safely)
-    filtered_data_df <- pay_compression_wide %>%
-      dplyr::filter(country_name %in% input$countries_first) %>%
-      dplyr::mutate(
-        Public_Sector = as.numeric(unlist(Public_Sector)),
-        Private_Sector = as.numeric(unlist(Private_Sector))
-      ) %>%
-      tidyr::drop_na(Public_Sector, Private_Sector)
-    
-    # 2) Fallback if no data
-    if (nrow(filtered_data_df) == 0) {
-      return(
-        plotly_empty(type = "scatter") %>%
-          layout(
-            title = "No data available",
-            annotations = list(
-              text = "No data available for the selected country/countries.",
-              xref = "paper", yref = "paper",
-              showarrow = FALSE,
-              font = list(size = 16),
-              x = 0.5, y = 0.5
-            ),
-            plot_bgcolor = "white",
-            paper_bgcolor = "white"
-          )
-      )
+    filtered_data_df <- pay_compression_wide %>% dplyr::filter(country_name %in% input$countries_first) %>%
+      dplyr::mutate(Public_Sector=as.numeric(unlist(Public_Sector)), Private_Sector=as.numeric(unlist(Private_Sector))) %>%
+      tidyr::drop_na(Public_Sector,Private_Sector)
+    if (nrow(filtered_data_df)==0) return(plotly_empty(type="scatter") %>% layout(title="No data available"))
+    filtered_data_df <- filtered_data_df %>% dplyr::mutate(color=ifelse(country_name==input$countries_first[1],"#B3242B","#003366"))
+    p <- plot_ly() %>% add_trace(data=filtered_data_df, x=~Private_Sector, y=~Public_Sector,
+                                 type="scatter", mode="markers+text", text=~country_name, textposition="top center",
+                                 marker=list(size=10,color=~color,opacity=0.7), name="Country")
+    if (nrow(filtered_data_df)>=2 && sd(filtered_data_df$Private_Sector,na.rm=TRUE)>0) {
+      m <- lm(Public_Sector~Private_Sector, data=filtered_data_df)
+      x_seq <- seq(min(filtered_data_df$Private_Sector,na.rm=TRUE), max(filtered_data_df$Private_Sector,na.rm=TRUE), length.out=50)
+      p <- p %>% add_trace(x=x_seq, y=predict(m,newdata=data.frame(Private_Sector=x_seq)), type="scatter", mode="lines",
+                           line=list(color="gray",dash="dash"), name="Trendline")
     }
-    
-    # 3) Extra safety: ensure required columns exist (after mutate)
-    if (!all(c("Public_Sector", "Private_Sector") %in% colnames(filtered_data_df))) {
-      return(
-        plotly_empty(type = "scatter") %>%
-          layout(
-            title = "Data error",
-            annotations = list(
-              text = "Required columns (Public_Sector, Private_Sector) are missing.",
-              xref = "paper", yref = "paper",
-              showarrow = FALSE,
-              font = list(size = 16),
-              x = 0.5, y = 0.5
-            ),
-            plot_bgcolor = "white",
-            paper_bgcolor = "white"
-          )
-      )
-    }
-    
-    # 4) Color: highlight first selected country
-    filtered_data_df <- filtered_data_df %>%
-      dplyr::mutate(
-        color = ifelse(country_name == input$countries_first[1], "#B3242B", "#003366")
-      )
-    
-    # 5) Build the scatter plot first
-    p <- plot_ly() %>%
-      add_trace(
-        data = filtered_data_df,
-        x = ~Private_Sector,
-        y = ~Public_Sector,
-        type = "scatter",
-        mode = "markers+text",
-        text = ~country_name,
-        textposition = "top center",
-        marker = list(size = 10, color = ~color, opacity = 0.7),
-        name = "Country"
-      )
-    
-    # 6) Add trendline only if there are 2+ observations and variation
-    if (nrow(filtered_data_df) >= 2 &&
-        stats::sd(filtered_data_df$Private_Sector, na.rm = TRUE) > 0 &&
-        stats::sd(filtered_data_df$Public_Sector, na.rm = TRUE) > 0) {
-      
-      trendline_model <- lm(Public_Sector ~ Private_Sector, data = filtered_data_df)
-      
-      # Make a smooth line across x-range
-      x_seq <- seq(
-        min(filtered_data_df$Private_Sector, na.rm = TRUE),
-        max(filtered_data_df$Private_Sector, na.rm = TRUE),
-        length.out = 50
-      )
-      trend_df <- data.frame(Private_Sector = x_seq)
-      trend_df$Public_Sector_hat <- predict(trendline_model, newdata = trend_df)
-      
-      p <- p %>%
-        add_trace(
-          data = trend_df,
-          x = ~Private_Sector,
-          y = ~Public_Sector_hat,
-          type = "scatter",
-          mode = "lines",
-          line = list(color = "gray", dash = "dash"),
-          name = "Trendline"
-        )
-    }
-    
-    # 7) Layout
-    p %>%
-      layout(
-        title = "Pay Compression: Public vs. Private Sector (Latest Year)",
-        xaxis = list(title = "Private Sector Pay Compression"),
-        yaxis = list(title = "Public Sector Pay Compression"),
-        showlegend = TRUE,
-        plot_bgcolor = "white",
-        paper_bgcolor = "white"
-      )
+    p %>% layout(title="Pay Compression: Public vs. Private Sector (Latest Year)",
+                 xaxis=list(title="Private Sector Pay Compression"), yaxis=list(title="Public Sector Pay Compression"),
+                 plot_bgcolor="white", paper_bgcolor="white")
   })
   
   output$note_dotplot_pay <- renderText({
-    "Note: This visualization explores pay compression in the public and private sectors across selected countries. Compression ratios are calculated based on the ratio of incomes at the 90th to the 10th percentile. The indicator shows the last year available for each selected country/region/income group(s)."
+    "Note: Pay compression ratios (P90/P10). Higher values = wider wage dispersion. Shows last year available."
   })
   
-  output$downloadPayCompressionDoc <- downloadHandler(
-    filename = function() paste0("Pay_Compression_Ratios_Report_", Sys.Date(), ".docx"),
-    content  = function(file) {
-      
-      req(input$countries_first, length(input$countries_first) > 0)
-      
-      # ---- Data ----
-      d <- pay_compression_wide %>%
-        dplyr::filter(country_name %in% input$countries_first)
-      
-      req(nrow(d) > 0, cancelOutput = TRUE)
-      req(all(c("Public_Sector","Private_Sector") %in% names(d)), cancelOutput = TRUE)
-      
-      # highlight first selection
-      first_sel <- input$countries_first[1]
-      d <- d %>%
-        dplyr::mutate(
-          highlight = ifelse(country_name == first_sel, "Selected country", "Other countries"),
-          country_name = factor(country_name, levels = input$countries_first)
-        )
-      
-      # ---- Doc start (match style of your other report) ----
-      doc <- officer::read_docx()
-      
-      # H1 with rule underneath
-      # ---- Title (styled with fp_text) ----
-      first_sel <- input$countries_first[1]
-      h1_txt <- paste0("Pay Compression Ratios — ", first_sel)
-      
-      title_style <- officer::fp_text(color = "#722F37", font.size = 20, bold = TRUE)
-      
-      doc <- officer::read_docx() %>%
-        officer::body_add_fpar(
-          officer::fpar(officer::ftext(h1_txt, prop = title_style))
-        )
-      
-      # (optional) thin rule under the title
-      rule   <- officer::fp_border(color = "#000000", width = 1)
-      p_rule <- officer::fp_par(border.bottom = rule, padding.bottom = 4)
-      doc <- doc %>% officer::body_add_fpar(officer::fpar(officer::ftext(""), fp_p = p_rule))
-      # 1.1 Introduction
-      h2_fmt <- officer::fp_text(font.size = 14, bold = TRUE)
-      doc <- doc |>
-        officer::body_add_fpar(officer::fpar(officer::ftext("1.1 Introduction", h2_fmt))) |>
-        officer::body_add_par(
-          "This report presents pay compression ratios in the public and private sectors for the selected countries. Pay compression is the ratio of wages at P90 to P10; higher values indicate a wider dispersion.",
-          style = "Normal"
-        )
-      
-      # 1.2 Size and Characteristics of the Public Sector
-      doc <- doc |>
-        officer::body_add_fpar(
-          officer::fpar(officer::ftext(" 1.2 Competitiveness of Public Sector", h2_fmt))
-        )
-      
-      # ---- Graph: Public vs Private + trendline ----
-      p <- ggplot2::ggplot(
-        d, ggplot2::aes(x = Private_Sector, y = Public_Sector, color = highlight, label = country_name)
-      ) +
-        ggplot2::geom_point(size = 3.8, alpha = 0.95, show.legend = FALSE) +
-        ggrepel::geom_text_repel(size = 3, max.overlaps = 50, color = "black") +
-        ggplot2::geom_smooth(method = "lm", se = FALSE, color = "gray50", linetype = "dashed") +
-        ggplot2::scale_color_manual(values = c(
-          "Selected country" = "#B3242B",  # red
-          "Other countries"  = "#003366"   # dark blue
-        )) +
-        ggplot2::labs(
-          title = "Pay Compression: Public vs. Private Sector (Latest Year)",
-          x = "Private Sector Pay Compression (P90/P10)",
-          y = "Public Sector Pay Compression (P90/P10)"
-        ) +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(plot.margin = ggplot2::margin(10, 40, 10, 10))
-      
-      img <- tempfile(fileext = ".png")
-      ggplot2::ggsave(img, plot = p, width = 8, height = 6, dpi = 300)
-      
-      doc <- doc |>
-        officer::body_add_img(src = img, width = 6.5, height = 4.8) |>
-        officer::body_add_par(
-          "Note:  This visualization explores pay compression in the public and private sectors across selected countries. Compression ratios are calculated based on the ratio of incomes at the 90th to the 10th percentile.",
-          style = "Normal"
-        )
-      
-      # ---- Write file ----
-      print(doc, target = file)
-    }
-  )
-  
-  
-  #Pay compression section  
-  
-  generate_pay_compression_section <- function(doc, selected_countries) {
-    # ---- guards ----
-    selected_countries <- unique(na.omit(as.character(selected_countries)))
-    selected_countries <- selected_countries[nzchar(selected_countries)]
-    if (length(selected_countries) == 0L) {
-      return(officer::body_add_par(doc, "No countries selected for analysis.", style = "Normal"))
-    }
-    
-    # needed data
-    if (!exists("pay_compression_wide") ||
-        !all(c("country_name","Public_Sector","Private_Sector") %in% names(pay_compression_wide))) {
-      return(officer::body_add_par(doc, "Pay compression data is missing.", style = "Normal"))
-    }
-    
-    # intro
-    doc <- officer::body_add_par(doc, "Pay Compression in the Private and Public Sector", style = "heading 1")
-    doc <- officer::body_add_par(
-      doc,
-      "This section presents pay compression ratios (90th/10th percentile) for public and private sectors across selected countries.",
-      style = "Normal"
-    )
-    
-    # ---- data ----
-    df <- pay_compression_wide |>
-      dplyr::filter(.data$country_name %in% selected_countries) |>
-      dplyr::mutate(
-        Public_Sector  = suppressWarnings(as.numeric(.data$Public_Sector)),
-        Private_Sector = suppressWarnings(as.numeric(.data$Private_Sector)),
-        country_name   = as.character(.data$country_name)
-      ) |>
-      dplyr::filter(is.finite(.data$Public_Sector), is.finite(.data$Private_Sector))
-    
-    if (nrow(df) == 0L) {
-      return(officer::body_add_par(doc, "No pay compression data available for the selected countries.", style = "Normal"))
-    }
-    
-    # ---- summaries ----
-    first_country <- selected_countries[1]
-    
-    country_summary <- df |>
-      dplyr::group_by(.data$country_name) |>
-      dplyr::summarise(
-        public_compression  = round(mean(.data$Public_Sector,  na.rm = TRUE), 1),
-        private_compression = round(mean(.data$Private_Sector, na.rm = TRUE), 1),
-        .groups = "drop"
-      )
-    
-    # helpers
-    pick_or_na <- function(x, idx) if (length(idx) && all(!is.na(idx))) x[idx] else NA_character_
-    
-    if (all(is.na(country_summary$public_compression))) {
-      highest_public <- lowest_public <- NA_character_
-    } else {
-      highest_public <- pick_or_na(country_summary$country_name, which.max(country_summary$public_compression))
-      lowest_public  <- pick_or_na(country_summary$country_name, which.min(country_summary$public_compression))
-    }
-    if (all(is.na(country_summary$private_compression))) {
-      highest_private <- lowest_private <- NA_character_
-    } else {
-      highest_private <- pick_or_na(country_summary$country_name, which.max(country_summary$private_compression))
-      lowest_private  <- pick_or_na(country_summary$country_name, which.min(country_summary$private_compression))
-    }
-    
-    fc_row <- dplyr::filter(country_summary, .data$country_name == first_country)
-    first_public_compression  <- if (nrow(fc_row) > 0L) fc_row$public_compression[1]  else NA_real_
-    first_private_compression <- if (nrow(fc_row) > 0L) fc_row$private_compression[1] else NA_real_
-    
-    # >>> NA-SAFE MEMBERSHIP CHECK <<<
-    in_first <- isTRUE(any(country_summary$country_name == first_country, na.rm = TRUE))
-    if (nrow(country_summary) >= 1L && in_first) {
-      rk_pub <- rank(-country_summary$public_compression,  ties.method = "min")[country_summary$country_name == first_country]
-      rk_prv <- rank(-country_summary$private_compression, ties.method = "min")[country_summary$country_name == first_country]
-      public_position  <- dplyr::case_when(rk_pub == 1 ~ "the highest",
-                                           rk_pub == nrow(country_summary) ~ "the lowest",
-                                           TRUE ~ "in the middle range")
-      private_position <- dplyr::case_when(rk_prv == 1 ~ "the highest",
-                                           rk_prv == nrow(country_summary) ~ "the lowest",
-                                           TRUE ~ "in the middle range")
-    } else {
-      public_position <- private_position <- "unranked"
-    }
-    
-    # ---- plot (with color) ----
-    df <- df %>%
-      dplyr::mutate(
-        highlight = ifelse(country_name == first_country, "First Selected Country", "Other Countries")
-      )
-    
-    lim_min <- min(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
-    lim_max <- max(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
-    
-    plt <- ggplot2::ggplot(
-      df,
-      ggplot2::aes(
-        x = .data$Private_Sector,
-        y = .data$Public_Sector,
-        color = .data$highlight
-      )
-    ) +
-      ggplot2::geom_point(size = 4) +
-      ggplot2::geom_text(
-        data = df,
-        mapping = ggplot2::aes(
-          x = .data$Private_Sector,
-          y = .data$Public_Sector,
-          label = .data$country_name
-        ),
-        inherit.aes = FALSE,
-        vjust = -0.6,
-        size = 3,
-        color = "black"
-      ) +
-      ggplot2::scale_color_manual(
-        values = c(
-          "First Selected Country" = "#B3242B",  # dark red highlight
-          "Other Countries"    = "#003366"   # WB blue
-        )
-      ) +
-      ggplot2::geom_abline(
-        slope = 1,
-        intercept = 0,
-        linetype = "dotted",
-        color = "gray50"
-      ) +
-      ggplot2::geom_smooth(
-        method = "lm",
-        se = FALSE,
-        linetype = "dashed",
-        linewidth = 0.8,
-        color = "gray40"
-      ) +
-      ggplot2::coord_equal(
-        xlim = c(lim_min, lim_max),
-        ylim = c(lim_min, lim_max),
-        expand = TRUE
-      ) +
-      ggplot2::labs(
-        title = "Pay Compression: Public vs. Private Sector",
-        x = "Private Sector Pay Compression (P90/P10)",
-        y = "Public Sector Pay Compression (P90/P10)",
-        color = NULL
-      ) +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(
-        legend.position = "bottom"
-      )
-    
-    
-    img_path <- tempfile(fileext = ".png")
-    ok <- TRUE
-    tryCatch(ggplot2::ggsave(filename = img_path, plot = plt, width = 8, height = 6, dpi = 300),
-             error = function(e) { ok <<- FALSE })
-    
-    # ---- write to doc ----
-    if (isTRUE(ok) && isTRUE(file.exists(img_path))) {
-      doc <- officer::body_add_img(doc, src = img_path, width = 6, height = 4)
-    }
-    doc <- officer::body_add_par(
-      doc,
-      paste0(
-        "For ", first_country, ", the pay compression ratio is ",
-        first_public_compression, " in the public sector and ",
-        first_private_compression, " in the private sector. ",
-        "Among the selected countries, ", highest_public, " has the highest public-sector compression and ",
-        lowest_public, " the lowest; in the private sector, ", highest_private, " is highest and ",
-        lowest_private, " lowest. ",
-        first_country, " ranks ", public_position, " in public-sector compression and ",
-        private_position, " in private-sector compression. A higher ratio implies greater inequality within a sector."
-      ),
-      style = "Normal"
-    )
-    doc <- officer::body_add_par(
-      doc,
-      "Note: Dashed line is linear fit; dotted line is equality (Public = Private).",
-      style = "Normal"
-    )
-    
-    return(doc)
-  }
-  generate_pay_compression_slide <- function(ppt, selected_countries) {
-    # sanitize countries
-    selected_countries <- unique(na.omit(as.character(selected_countries)))
-    selected_countries <- selected_countries[nzchar(selected_countries)]
-    if (length(selected_countries) == 0L) return(ppt)
-    
-    # guard data frame
-    if (!exists("pay_compression_wide") ||
-        !all(c("country_name","Public_Sector","Private_Sector") %in% names(pay_compression_wide))) {
-      return(ppt)
-    }
-    
-    # filter + coerce numeric + drop non-finite rows
-    df <- pay_compression_wide %>%
-      dplyr::filter(.data$country_name %in% selected_countries) %>%
-      dplyr::mutate(
-        Public_Sector  = suppressWarnings(as.numeric(.data$Public_Sector)),
-        Private_Sector = suppressWarnings(as.numeric(.data$Private_Sector)),
-        country_name   = as.character(.data$country_name)
-      ) %>%
-      dplyr::filter(is.finite(.data$Public_Sector), is.finite(.data$Private_Sector))
-    
-    if (nrow(df) == 0L) return(ppt)
-    
-    # axis limits for nice 45° reference
-    lim_min <- min(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
-    lim_max <- max(c(df$Private_Sector, df$Public_Sector), na.rm = TRUE)
-    
-    # build plot (no color scale since we don't map color)
-    plt <- ggplot2::ggplot(df, ggplot2::aes(x = .data$Private_Sector, y = .data$Public_Sector)) +
-      ggplot2::geom_point(size = 3) +
-      ggplot2::geom_text(ggplot2::aes(label = .data$country_name), vjust = -0.6, size = 3) +
-      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-      ggplot2::geom_smooth(method = "lm", se = FALSE, linetype = "dashed", linewidth = 0.8) +
-      ggplot2::coord_equal(xlim = c(lim_min, lim_max), ylim = c(lim_min, lim_max), expand = TRUE) +
-      ggplot2::labs(
-        title = "Pay Compression: Public vs. Private Sector",
-        x = "Private Sector Pay Compression (P90/P10)",
-        y = "Public Sector Pay Compression (P90/P10)"
-      ) +
-      ggplot2::theme_minimal()
-    
-    # save image safely
-    img_path <- tempfile(fileext = ".png")
-    ok <- TRUE
-    tryCatch(ggplot2::ggsave(filename = img_path, plot = plt, width = 6, height = 6, dpi = 300),
-             error = function(e) ok <<- FALSE)
-    if (!ok || !file.exists(img_path)) return(ppt)
-    
-    # add slide with image
-    ppt %>%
-      officer::add_slide(layout = "Title and Content", master = "Office Theme") %>%
-      officer::ph_with(
-        officer::external_img(img_path, height = 4, width = 4),
-        location = officer::ph_location_type(type = "body")
-      )
-  }
-  generate_conclusion_section <- function(doc) {
-    # Add Section Title
-    doc <- doc %>% body_add_par("Conclusion", style = "heading 1")
-    
-    # Add Conclusion Text
-    doc <- doc %>% body_add_par(
-      "This report provides a comprehensive analysis of wage bill trends, gender employment representation, and workforce participation in the public sector. 
-      The findings highlight key trends and disparities across different sectors and countries.",
-      style = "Normal"
-    )
-    
-    return(doc)
-  }
-  
-  #Download CVS
   output$dl_csv_pay_compression <- downloadHandler(
-    filename = function() paste0("pay_compression_public_vs_private_", Sys.Date(), ".csv"),
+    filename = function() paste0("pay_compression_public_vs_private_",Sys.Date(),".csv"),
     content  = function(file) {
-      # empty schema so you never get a structurally blank file
-      empty_schema <- tibble::tibble(
-        country_name    = character(),
-        year            = integer(),
-        private_sector  = numeric(),
-        public_sector   = numeric()
-      )
-      
-      # need selected countries
-      if (is.null(input$countries_first) || !length(input$countries_first)) {
-        utils::write.csv(empty_schema, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
-        return()
+      if (is.null(input$countries_first)||!length(input$countries_first)) {
+        utils::write.csv(data.frame(),file,row.names=FALSE,na=""); return()
       }
-      
-      # filter source used by the plot
-      d <- pay_compression_wide %>%
-        dplyr::filter(country_name %in% input$countries_first)
-      
-      # ensure required columns exist
-      if (!all(c("Public_Sector", "Private_Sector") %in% names(d))) {
-        utils::write.csv(empty_schema, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
-        return()
-      }
-      
-      # include year if present; otherwise fill NA
-      out <- d %>%
-        dplyr::transmute(
-          country_name,
-          year           = if ("year" %in% names(d)) as.integer(.data[["year"]]) else NA_integer_,
-          private_sector = as.numeric(Private_Sector),
-          public_sector  = as.numeric(Public_Sector)
-        ) %>%
-        dplyr::arrange(country_name)
-      
-      if (nrow(out) == 0) out <- empty_schema
-      utils::write.csv(out, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
+      d <- pay_compression_wide %>% dplyr::filter(country_name %in% input$countries_first) %>%
+        dplyr::transmute(country_name, private_sector=as.numeric(Private_Sector), public_sector=as.numeric(Public_Sector))
+      utils::write.csv(d,file,row.names=FALSE,na="")
     }
   )
   
-  
-  
-  add_section_slide <- function(ppt, title) {
-    ppt %>%
-      add_slide(layout = "Title Slide", master = "Office Theme") %>%
-      ph_with(
-        value = fpar(
-          ftext(title, prop = fp_text(color = "#003366", font.size = 40, bold = TRUE))
-        ),
-        location = ph_location_type(type = "ctrTitle")
-      )
-  }
-  
-  
-  #Download selected graphs 
-  
-  output$downloadSelectedGraphsDoc <- downloadHandler(
-    filename = function() { 
-      paste0("Wage_bill_and_public_employment_analysis_Selected_Report_", Sys.Date(), ".docx") 
-    },
-    content = function(file) {
-      # Get the selected countries dynamically
-      selected_countries <- input$download_report_countries
-      
-      # Initialize Word document
-      doc <- read_docx() 
-      
-      # Add Report Title
-      title_style <- fp_text(color = "#722F37", font.size = 20, bold = TRUE)
-      doc <- doc %>% body_add_fpar(fpar(ftext("Wage bill and public employment analysis", prop = title_style)))
-      doc <- generate_intro_section(doc, selected_countries)  # Add the Intro First
-      
-      # Define Section Style 
-      section_style <- fp_text(color = "#003366", font.size = 14, bold = TRUE)
-      
-      # ✅ Dynamically include only selected sections
-      selected_sections <- input$selected_graphs
-      
-      # ✅ Ensure selected_sections is not NULL before checking length
-      if (is.null(selected_sections) || length(selected_sections) == 0) {
-        doc <- doc %>% body_add_par("No sections selected for download.", style = "Normal")
-      } else {
-        if ("wagebill" %in% selected_sections) {
-          doc <- generate_wage_bill_analysis_section(doc, selected_countries)
-        }
-        if ("wagebill_gdp" %in% selected_sections) {
-          doc <- generate_gdp_analysis_section(doc, selected_countries)
-        }
-        if ("tertiaryeducation" %in% selected_sections) {
-          doc <- generate_tertiary_education_section(doc, selected_countries)
-        }
-        if ("genderwagepremium" %in% selected_sections) {
-          doc <- generate_wage_premium_gender_section(doc, selected_countries)
-        }
-        if ("wagepremiumeducation" %in% selected_sections) {
-          doc <- generate_wage_premium_education_section(doc, selected_countries)
-        }
-        if ("public_employment" %in% selected_sections) {
-          doc <- generate_public_sector_employment_section(doc, selected_countries) 
-        }
-        if ("public_workforce" %in% selected_sections) {
-          doc <- generate_public_sector_workforce_section(doc, selected_countries)
-        }
-        if ("gender_workforce" %in% selected_sections) {
-          doc <- generate_gender_workforce_section(doc, selected_countries)
-        }
-        if ("female_leadership" %in% selected_sections) {  # Fixed typo from "femaleocuupation"
-          doc <- generate_females_occupation_groups_section(doc, selected_countries)
-        }
-        if ("wagepremium" %in% selected_sections) {
-          doc <- generate_wage_premium_report_section(doc, selected_countries)
-        }
-        if ("gender_wage_premium" %in% selected_sections) {
-          doc <- generate_gender_wage_premiumbysector_section(doc, selected_countries)
-        }
-        if ("pay_compression" %in% selected_sections) {
-          doc <- generate_pay_compression_section(doc, selected_countries = selected_countries)
-          
-        }
-      }
-      
-      # ✅ Save the customized report
-      print(doc, target = file)
-    }
-  )
-  
-  
-  #Download one single report
-  
-  output$downloadAllGraphsDoc <- downloadHandler(
-    filename = function() paste0("Wage_bill_and_public_employment_analysis_", Sys.Date(), ".docx"),
-    content = function(file) {
-      # 1) sanitize the input up front (prevents if(NA) down the line)
-      selected_countries <- sanitize_vec(input$download_report_countries)
-      
-      # 2) init + styles
-      doc <- officer::read_docx()
-      title_style   <- officer::fp_text(color = "#722F37", font.size = 20, bold = TRUE)
-      section_style <- officer::fp_text(color = "#003366", font.size = 14, bold = TRUE)
-      
-      # 3) safe runner that never crashes the download
-      run_section <- function(label, fn) {
-        cat("[download-all] start:", label, "\n")
-        res <- try(fn(), silent = TRUE)
-        if (inherits(res, "try-error")) {
-          msg <- paste0("Skipping '", label, "': ", conditionMessage(attr(res, "condition")))
-          cat("[download-all] ERROR:", msg, "\n")
-          # write the message so the doc still builds
-          assign("doc", officer::body_add_par(doc, msg, style = "Normal"), inherits = TRUE)
-        } else if (inherits(res, "rdocx")) {
-          assign("doc", res, inherits = TRUE)
-          cat("[download-all] done:", label, "\n")
-        } else {
-          cat("[download-all] done (no doc returned):", label, "\n")
-        }
-        invisible(NULL)
-      }
-      
-      # 4) Title + Intro  (pipe passes doc as first arg; we pass countries by name)
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("", prop = title_style)))
-      run_section("Intro", function() generate_intro_section(doc, selected_countries = selected_countries))
-      
-      # Section 1
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("Macro-Fundamentals of the Public Sector", prop = section_style)))
-      run_section("Wage Bill", function() generate_wage_bill_analysis_section(doc, selected_countries = selected_countries))
-      run_section("% of GDP",  function() generate_gdp_analysis_section(doc, selected_countries = selected_countries))
-      
-      # Section 2
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("Size and Characteristics of the Public Sector", prop = section_style)))
-      run_section("Public Employment",  function() generate_public_sector_employment_section(doc, selected_countries = selected_countries))
-      run_section("Tertiary Education", function() generate_tertiary_education_section(doc, selected_countries = selected_countries))
-      
-      # Section 3
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("Competitiveness of Public Sector Wages", prop = section_style))) %>%
-        officer::body_add_par(
-          "Public sector compensation should theoretically be designed with an awareness of its influence on the broader labor market...",
-          style = "Normal"
-        )
-      run_section("Wage Premium",             function() generate_wage_premium_report_section(doc, selected_countries = selected_countries))
-      run_section("Wage Premium by Education",function() generate_wage_premium_education_section(doc, selected_countries = selected_countries))
-      run_section("Pay Compression",          function() generate_pay_compression_section(doc, selected_countries = selected_countries))
-      
-      # Section 4
-      doc <- doc %>%
-        officer::body_add_fpar(officer::fpar(officer::ftext("Equity in the Public Sector", prop = section_style)))
-      run_section("Gender Workforce",         function() generate_gender_workforce_section(doc, selected_countries = selected_countries))
-      run_section("Female Leadership",        function() generate_females_occupation_groups_section(doc, selected_countries = selected_countries))
-      run_section("Gender WP by Sector",      function() generate_gender_wage_premiumbysector_section(doc, selected_countries = selected_countries))
-      run_section("WP by Gender (public)",    function() generate_wage_premium_gender_section(doc, selected_countries = selected_countries))
-      
-      # Conclusion (adjust if your function takes only doc)
-      run_section("Conclusion",               function() generate_conclusion_section(doc))
-      
-      print(doc, target = file)
-    }
-  )
-  
-  #Power Point Slides 
-  
-  output$downloadSelectedGraphsPPT <- downloadHandler(
-    filename = function() { 
-      paste0("Wage_bill_and_public_employment_analysis_Selected_Presentation_", Sys.Date(), ".pptx")
-    },
-    content = function(file) {
-      selected_countries <- input$download_report_countries
-      selected_sections <- input$selected_graphs
-      
-      # Initialize PowerPoint
-      ppt <- read_pptx()
-      
-      # Add a title slide
-      ppt <- ppt %>%
-        add_slide(layout = "Title Slide", master = "Office Theme") %>%
-        ph_with("Wage bill and public employment analysis", location = ph_location_type(type = "ctrTitle")) %>%
-        ph_with(paste("Generated on", Sys.Date()), location = ph_location_type(type = "subTitle"))
-      
-      # Only include selected graphs
-      if (!is.null(selected_sections) && length(selected_sections) > 0) {
-        
-        if ("wagebill" %in% selected_sections || "wagebill_gdp" %in% selected_sections) {
-          ppt <- add_section_slide(ppt, "Macro-Fundamentals of the Public Sector")
-        }
-        if ("wagebill" %in% selected_sections) {
-          ppt <- generate_wage_bill_analysis_slide(ppt, selected_countries)
-        }
-        if ("wagebill_gdp" %in% selected_sections) {
-          ppt <- generate_gdp_analysis_slide(ppt, selected_countries)
-        }
-        if ("public_employment" %in% selected_sections || "public_workforce" %in% selected_sections || "tertiaryeducation" %in% selected_sections) {
-          ppt <- add_section_slide(ppt, "Size and Characteristics of the Public Sector")
-        }
-        if ("public_employment" %in% selected_sections) {
-          ppt <- generate_public_sector_employment_slide(ppt, selected_countries)
-        }
-        if ("public_workforce" %in% selected_sections) {
-          ppt <- generate_public_sector_workforce_slide(ppt, selected_countries)
-        }
-        if ("tertiaryeducation" %in% selected_sections) {
-          ppt <- generate_tertiary_education_slide(ppt, selected_countries)
-        }
-        if ("genderwagepremium" %in% selected_sections || "wagepremiumeducation" %in% selected_sections || "pay_compression" %in% selected_sections) {
-          ppt <- add_section_slide(ppt, "Competiiveness of public sector wages")
-        }
-        
-        if ("genderwagepremium" %in% selected_sections) {
-          ppt <- generate_wage_premium_gender_slide(ppt, selected_countries)
-        }
-        if ("wagepremiumeducation" %in% selected_sections) {
-          ppt <-generate_wage_premium_education_slide(ppt, selected_countries)
-        }
-        
-        if ("pay_compression" %in% selected_sections) {
-          ppt <- generate_pay_compression_slide(ppt, selected_countries)
-        }
-        
-        if ("wagepremiumgender" %in% selected_sections || "gender_workforce" %in% selected_sections || "gender_wage_premium" %in% selected_sections
-            || "female_leadership" %in% selected_sections) {
-          ppt <- add_section_slide(ppt, "Equity in public sector")
-        }
-        
-        if ("wagepremiumgender" %in% selected_sections) {
-          ppt <- generate_wage_premium_gender_report_slide(ppt, selected_countries)
-        }
-        
-        
-        if ("gender_workforce" %in% selected_sections) {
-          ppt <- generate_gender_workforce_slide(ppt, selected_countries)
-        }
-        if ("gender_wage_premium" %in% selected_sections) {
-          ppt <- generate_gender_wage_premiumbysector_slide(ppt, selected_countries)
-        }
-        
-        if ("female_leadership" %in% selected_sections) {
-          ppt <- generate_females_occupation_groups_slide(ppt, selected_countries)
-        }
-        
-        # add more slide generators here as needed
-      } else {
-        # If no selection: optionally include a placeholder slide
-        ppt <- ppt %>%
-          add_slide(layout = "Title and Content", master = "Office Theme") %>%
-          ph_with_text(type = "title", str = "No graphs selected") %>%
-          ph_with_text(type = "body", str = "Please select at least one graph to download.")
-      }
-      
-      # Save the PowerPoint
-      print(ppt, target = file)
-    }
-  )
-  
-  
-  # ---------------------
-  # Clean base map with legend
+  # ── METADATA MAP ─────────────────────────────────────────────────────────────
   output$worldMap <- renderLeaflet({
-    leaflet(world_spdf) %>%
-      addTiles() %>%
-      setView(lng = 0, lat = 20, zoom = 2) %>%
-      addLegend(
-        position = "bottomright", 
-        colors = c("gray", "#6DA96F"),
-        labels = c("No Data", "Reported"),
-        title = "Indicator Availability",
-        opacity = 1
-      )
+    leaflet(world_spdf) %>% addTiles() %>% setView(lng=0,lat=20,zoom=2) %>%
+      addLegend(position="bottomright", colors=c("gray","#6DA96F"), labels=c("No Data","Reported"),
+                title="Indicator Availability", opacity=1)
   })
   
-  # Create reactive that flags countries that have ANY data for the selected indicator
   filtered_data_for_map <- reactive({
     req(input$indicatorSelect)
-    
-    data_wwbi %>%
-      filter(indicator_name == input$indicatorSelect) %>%
-      mutate(
-        any_data = apply(select(., starts_with("year_")), 1, function(x) any(!is.na(x)))
-      ) %>%
-      filter(any_data) %>%
-      transmute(country_name, indicator_name, has_data = 1)  # use 'has_data' instead of value_percentage
+    data_wwbi %>% filter(indicator_name==input$indicatorSelect) %>%
+      mutate(any_data=apply(select(.,starts_with("year_")),1,function(x) any(!is.na(x)))) %>%
+      filter(any_data) %>% transmute(country_name,indicator_name,has_data=1)
   })
   
-  # Update the map
   observe({
     req(input$indicatorSelect)
-    
     reported_countries <- filtered_data_for_map()
-    
-    if (nrow(reported_countries) == 0) return()
-    
-    # Match the country names to the shapefile column
-    world_data_merged <- world_spdf %>%
-      left_join(reported_countries, by = c("name_long" = "country_name"))
-    
-    # Use a factor color palette based on 0 (missing) and 1 (has data)
-    color_pal <- colorFactor(palette = c("gray", "#6DA96F"), domain = c(0, 1))
-    
+    if (nrow(reported_countries)==0) return()
+    world_data_merged <- world_spdf %>% left_join(reported_countries,by=c("name_long"="country_name"))
+    color_pal <- colorFactor(palette=c("gray","#6DA96F"),domain=c(0,1))
     leafletProxy("worldMap") %>% clearShapes() %>%
-      addPolygons(
-        data = world_data_merged,
-        fillColor = ~color_pal(ifelse(is.na(has_data), 0, has_data)),
-        fillOpacity = 0.7,
-        color = "white",
-        weight = 1,
-        highlightOptions = highlightOptions(color = "#FFD700", weight = 2, fillOpacity = 0.9),
-        label = ~paste0("Country: ", name_long, "-", 
-                        ifelse(!is.na(has_data), "Reported", "No Data")),
-        popup = ~paste(
-          "Country:", name_long, "-",
-          "Indicator:", ifelse(!is.na(indicator_name), indicator_name, "None"), "-",
-          ifelse(!is.na(has_data), "Reported", "No Data Available")
-        )
+      addPolygons(data=world_data_merged,
+                  fillColor=~color_pal(ifelse(is.na(has_data),0,has_data)), fillOpacity=0.7,
+                  color="white", weight=1,
+                  highlightOptions=highlightOptions(color="#FFD700",weight=2,fillOpacity=0.9),
+                  label=~paste0("Country: ",name_long," - ",ifelse(!is.na(has_data),"Reported","No Data")))
+    output$countryCount <- renderText({ paste("Total Countries with Data:",nrow(reported_countries)) })
+  })
+  
+  # ── PUBLICATIONS & DOWNLOADS ──────────────────────────────────────────────────
+  output$download_pdf <- downloadHandler(filename="Codebook and Explanatory Note.pdf",
+                                         content=function(file) file.copy(file.path(data_path,"Files","WWBI Codebook v3.1.pdf"),file))
+  output$pub1 <- downloadHandler(filename=function() "Innovating-Bureaucracy-for-a-More-Capable-Government.pdf",
+                                 content=function(file) file.copy(file.path(data_path,"Files","Innovating-Bureaucracy-for-a-More-Capable-Government.pdf"),file))
+  output$pub2 <- downloadHandler(filename=function() "WWBI-Introduction.pdf",
+                                 content=function(file) file.copy(file.path(data_path,"Files","Public Administration Review - 2021 - Baig - Introducing the Worldwide Bureaucracy Indicators  A New Global Dataset on.pdf"),file))
+  output$pub3 <- downloadHandler(filename=function() "Public-Sector-Employment-and-Compensation-An-Assessment-Framework.pdf",
+                                 content=function(file) file.copy(file.path(data_path,"Files","Public-Sector-Employment-and-Compensation-An-Assessment-Framework.pdf"),file))
+  output$pub4 <- downloadHandler(filename=function() "Worldwide-Bureaucracy-Indicators-Methodology-Insights-and-Applications.pdf",
+                                 content=function(file) file.copy(file.path(data_path,"Files","Worldwide-Bureaucracy-Indicators-Methodology-Insights-and-Applications.pdf"),file))
+  
+  # ── DOWNLOAD HANDLERS (Word reports) — kept from original code ───────────────
+  # These pass through to the generate_* helper functions defined below.
+  
+  output$downloadWord <- downloadHandler(
+    filename=function() paste0("Wage_Bill_Analysis_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$countries)
+      first_country <- if (!is.null(input$countries)&&length(input$countries)>0) input$countries[1] else "Unknown"
+      doc <- officer::read_docx()
+      title_style <- fp_text(color="#722F37",font.size=16,bold=TRUE)
+      doc <- doc %>% body_add_fpar(fpar(ftext(paste("Wage Bill Analysis Report -",first_country),prop=title_style)))
+      graph_data <- if (input$graph_choice=="GDP") wage_bill_gdp else wage_bill_publicexp
+      graph_data <- graph_data %>% filter(country_name %in% input$countries)
+      if (nrow(graph_data)>0) {
+        g <- ggplot(graph_data, aes(x=year,y=value,color=country_name)) + geom_line(size=1.2) + geom_point(size=3) +
+          labs(title=ifelse(input$graph_choice=="GDP","Wage Bill as % of GDP","Wage Bill as % of Public Expenditure"),
+               x="Year", y="Value") + theme_minimal()
+        doc <- doc %>% body_add_gg(value=g,style="centered")
+      }
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGDPDoc <- downloadHandler(
+    filename=function() paste0("Wage_Bill_vs_GDP_Report_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$countries_gdp)
+      d <- merged_data %>% dplyr::filter(country_name %in% input$countries_gdp)
+      req(nrow(d)>0)
+      doc <- officer::read_docx() %>% body_add_par("Wage Bill vs. GDP Analysis",style="heading 1")
+      p <- ggplot(d,aes(x=log_gdp,y=indicator_value,color=country_name)) + geom_point(size=3) +
+        geom_smooth(method="lm",se=FALSE,color="gray50",linetype="dashed") +
+        labs(title="Wage Bill vs. Log(GDP per Capita)", x="Log(GDP per Capita, 2015)", y="Wage Bill (%)") + theme_minimal()
+      doc <- doc %>% body_add_gg(value=p,width=6.5,height=4.5)
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadWagePremiumReport <- downloadHandler(
+    filename=function() paste0("Public_Sector_Wage_Premium_Report_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$countries_wage_premium)
+      doc <- officer::read_docx() %>% body_add_par("Public Sector Wage Premium Analysis",style="heading 1")
+      d <- public_wage_premium %>% dplyr::filter(country_name %in% input$countries_wage_premium) %>% tidyr::drop_na(value_percentage)
+      if (nrow(d)>0) {
+        p <- ggplot(d,aes(x=country_name,y=value_percentage,color=country_name)) + geom_point(size=4) +
+          labs(title="Public Sector Wage Premium by Country", x="Country", y="Wage Premium (%)") +
+          theme_minimal() + theme(axis.text.x=element_text(angle=45,hjust=1))
+        doc <- doc %>% body_add_gg(value=p,width=6.5,height=4.5)
+      }
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadEducationWagePremium <- downloadHandler(
+    filename=function() paste0("Public_Sector_Wage_Premium_Education_Level_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$selected_country)
+      d <- public_wage_premium_educ %>% dplyr::filter(country_name==input$selected_country) %>% tidyr::drop_na(value_percentage)
+      req(nrow(d)>0)
+      doc <- officer::read_docx() %>% body_add_par(paste0("Wage Premium by Education – ",input$selected_country),style="heading 1")
+      p <- ggplot(d,aes(x=indicator_name,y=value_percentage,fill=indicator_name)) + geom_col(width=0.7) +
+        scale_fill_manual(values=c("No Education"="#E69F00","Primary Education"="#56B4E9","Secondary Education"="#009E73","Tertiary Education"="#D55E00")) +
+        labs(title="Wage Premium by Education Level", x=NULL, y="Wage Premium (%)") + theme_minimal()
+      doc <- doc %>% body_add_gg(value=p,width=6.5,height=4.5)
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGraphsWord <- downloadHandler(
+    filename=function() paste0("Public_Sector_Employment_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$countries_first,input$country_second)
+      doc <- officer::read_docx() %>% body_add_par("Public Sector Employment Analysis",style="heading 1")
+      d1 <- public_sector_emp_temp_last %>% dplyr::filter(country_name %in% input$countries_first)
+      d2 <- public_sector_emp_temp     %>% dplyr::filter(country_name==input$country_second)
+      if (nrow(d1)>0) {
+        p1 <- ggplot(d1,aes(x=country_name,y=value_percentage,color=indicator_label)) + geom_point(size=4) +
+          labs(title="Public Sector Employment (Last Year)", x="Country", y="Value (%)") + theme_minimal()
+        doc <- doc %>% body_add_gg(value=p1,width=6.5,height=4.5)
+      }
+      if (nrow(d2)>0) {
+        p2 <- ggplot(d2,aes(x=year,y=value_percentage,color=indicator_label,group=indicator_label)) +
+          geom_line(size=1.1) + geom_point(size=2.8) +
+          labs(title=paste0("Public Sector Employment Over Time — ",input$country_second), x="Year", y="Value (%)") + theme_minimal()
+        doc <- doc %>% body_add_gg(value=p2,width=6.5,height=4.5)
+      }
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGraphsWordGender <- downloadHandler(
+    filename=function() paste0("Female_Share_of_Employment_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$countries_gender,input$country_gender)
+      doc <- officer::read_docx() %>% body_add_par("Female Share of Employment",style="heading 1")
+      d1 <- gender_workforce %>% dplyr::filter(country_name %in% input$countries_gender) %>%
+        dplyr::group_by(country_name,indicator_name) %>% dplyr::slice_tail(n=1) %>% dplyr::ungroup()
+      d2 <- gender_workforce %>% dplyr::filter(country_name==input$country_gender)
+      if (nrow(d1)>0) {
+        p1 <- ggplot(d1,aes(x=country_name,y=value_percentage,fill=indicator_name)) + geom_col(position=position_dodge(0.8),width=0.7) +
+          scale_fill_manual(values=c("as a share of private paid employees"="#E69F00","as a share of public paid employees"="#56B4E9")) +
+          labs(title="Female Employment by Sector (Last Year)", x="Country", y="Employment (%)") + theme_minimal()
+        doc <- doc %>% body_add_gg(value=p1,width=6.5,height=4.5)
+      }
+      if (nrow(d2)>0) {
+        p2 <- ggplot(d2,aes(x=year,y=value_percentage,color=indicator_name,group=indicator_name)) +
+          geom_line(size=1.1) + geom_point(size=2.8) +
+          scale_color_manual(values=c("as a share of private paid employees"="#E69F00","as a share of public paid employees"="#56B4E9")) +
+          labs(title=paste0("Female Employment Over Time — ",input$country_gender), x="Year", y="Employment (%)") + theme_minimal()
+        doc <- doc %>% body_add_gg(value=p2,width=6.5,height=4.5)
+      }
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGraphswagepremiumbygender <- downloadHandler(
+    filename=function() paste0("Wage_Premium_Gender_Graphs_",Sys.Date(),".docx"),
+    content=function(file) {
+      doc <- officer::read_docx() %>% body_add_par("Public Sector Wage Premium by Gender",style="heading 1")
+      if (!is.null(input$countries_first)&&length(input$countries_first)>0) {
+        d1 <- gender_wage_premium_last %>% dplyr::filter(country_name %in% input$countries_first)
+        if (nrow(d1)>0) {
+          p1 <- ggplot(d1,aes(x=country_name,y=value_percentage,color=indicator_label)) + geom_point(size=4) +
+            scale_color_manual(values=c("Male"="#E69F00","Female"="#56B4E9")) +
+            labs(title="Wage Premium by Gender (Last Year)", x="Country", y="Wage Premium (%)") + theme_minimal()
+          doc <- doc %>% body_add_gg(value=p1,width=6.5,height=4.5)
+        }
+      }
+      if (isTruthy(input$country_second)) {
+        d2 <- gender_wage_premium %>% dplyr::filter(country_name==input$country_second)
+        if (nrow(d2)>0) {
+          p2 <- ggplot(d2,aes(x=year,y=value_percentage,color=indicator_label,group=indicator_label)) +
+            geom_line(size=1) + geom_point(size=2.8) +
+            scale_color_manual(values=c("Male"="#E69F00","Female"="#56B4E9")) +
+            labs(title=paste0("Wage Premium Over Time — ",input$country_second), x="Year", y="Wage Premium (%)") + theme_minimal()
+          doc <- doc %>% body_add_gg(value=p2,width=6.5,height=4.5)
+        }
+      }
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGraphsWordfemale <- downloadHandler(
+    filename=function() paste0("Females_Occupation_Groups_Analysis_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$selected_countries)
+      d <- gender_leadership %>% dplyr::filter(country_name %in% input$selected_countries)
+      req(nrow(d)>0)
+      cols <- c("Clerks-Private"="#9ECAE1","Clerks-Public"="#08519C","Managers-Private"="#FDAE6B","Managers-Public"="#E6550D")
+      p <- ggplot(d,aes(x=country_name,y=value_percentage,fill=indicator_label)) +
+        geom_col(position=position_dodge(0.8),width=0.7) + scale_fill_manual(values=cols) +
+        labs(title="Females by Occupational Group and Sector", x="Country", y="Female Share (%)") +
+        theme_minimal() + theme(axis.text.x=element_text(angle=45,hjust=1))
+      doc <- officer::read_docx() %>% body_add_par("Females by Occupational Group and Sector",style="heading 1") %>% body_add_gg(value=p,width=6.5,height=4.5)
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGenderWagePremium <- downloadHandler(
+    filename=function() paste0("Gender_Wage_Premium_Report_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$selected_countries)
+      d <- gender_wage_premiumpublic %>% dplyr::filter(country_name %in% input$selected_countries, indicator_label %in% c("Public Administration","Education","Health"))
+      req(nrow(d)>0)
+      p <- ggplot(d,aes(x=country_name,y=value_percentage,fill=indicator_label)) +
+        geom_col(position=position_dodge(0.8),width=0.7) + scale_fill_viridis_d(option="D") +
+        labs(title="Gender Wage Premium in Public Sector by Industry", x="Country", y="Wage Premium (%)") +
+        theme_minimal() + theme(axis.text.x=element_text(angle=45,hjust=1))
+      doc <- officer::read_docx() %>% body_add_par("Gender Wage Premium by Industry",style="heading 1") %>% body_add_gg(value=p,width=6.5,height=4.5)
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadPayCompressionDoc <- downloadHandler(
+    filename=function() paste0("Pay_Compression_Ratios_Report_",Sys.Date(),".docx"),
+    content=function(file) {
+      req(input$countries_first)
+      d <- pay_compression_wide %>% dplyr::filter(country_name %in% input$countries_first) %>%
+        dplyr::mutate(Public_Sector=as.numeric(unlist(Public_Sector)),Private_Sector=as.numeric(unlist(Private_Sector))) %>%
+        tidyr::drop_na(Public_Sector,Private_Sector)
+      req(nrow(d)>0)
+      p <- ggplot(d,aes(x=Private_Sector,y=Public_Sector,label=country_name)) + geom_point(size=3) +
+        ggrepel::geom_text_repel(size=3,color="black") +
+        geom_smooth(method="lm",se=FALSE,color="gray50",linetype="dashed") +
+        labs(title="Pay Compression: Public vs. Private Sector", x="Private Sector (P90/P10)", y="Public Sector (P90/P10)") + theme_minimal()
+      doc <- officer::read_docx() %>% body_add_par("Pay Compression Ratios",style="heading 1") %>% body_add_gg(value=p,width=6.5,height=4.5)
+      print(doc,target=file)
+    }
+  )
+  
+  output$downloadGraphsemploymentdist <- downloadHandler(
+    filename=function() paste0("Employment_Distribution_Analysis_",Sys.Date(),".docx"),
+    content=function(file) {
+      doc <- officer::read_docx() %>% body_add_par("Employment Distribution Analysis",style="heading 1")
+      fgd <- filtered_workforce_data() %>% dplyr::filter(country_name %in% input$countries_workforce)
+      if (nrow(fgd)>0) {
+        p1 <- ggplot(fgd,aes(x=country_name,y=value_percentage,fill=indicator_name)) + geom_bar(stat="identity",position="stack") +
+          scale_fill_viridis_d(option="D") + labs(title="Employment distribution by country", x="Country", y="Employment distribution (%)") + theme_minimal()
+        doc <- doc %>% body_add_gg(value=p1,width=6,height=4)
+      }
+      print(doc,target=file)
+    }
+  )
+  
+  # ── COMBINED WORD & PPT REPORTS ───────────────────────────────────────────────
+  # Helper: generate intro
+  generate_intro_section <- function(doc, selected_countries) {
+    first_country <- if (!is.null(selected_countries)&&length(selected_countries)>0) selected_countries[1] else "Unknown Country"
+    first_region  <- tryCatch(countrycode(first_country,origin="country.name",destination="region"), error=function(e) "its region")
+    if (is.na(first_region)) first_region <- "its region"
+    title_style    <- fp_text(color="#722F37",font.size=20,bold=TRUE)
+    subtitle_style <- fp_text(color="black",font.size=16,bold=TRUE)
+    doc <- doc %>%
+      body_add_fpar(fpar(ftext(first_country,prop=title_style))) %>%
+      body_add_fpar(fpar(ftext("Wage Bill and Public Employment Analysis",prop=subtitle_style))) %>%
+      body_add_par(paste0("This note presents evidence on public sector employment and compensation practices in ",first_country,
+                          " using the Worldwide Bureaucracy Indicators (WWBI). For international comparisons, peer countries from ",
+                          first_region," are included."), style="Normal")
+    return(doc)
+  }
+  
+  output$downloadAllGraphsDoc <- downloadHandler(
+    filename=function() paste0("Wage_bill_and_public_employment_analysis_",Sys.Date(),".docx"),
+    content=function(file) {
+      selected_countries <- sanitize_vec(input$download_report_countries)
+      doc <- officer::read_docx()
+      title_style   <- officer::fp_text(color="#722F37",font.size=20,bold=TRUE)
+      section_style <- officer::fp_text(color="#003366",font.size=14,bold=TRUE)
+      doc <- doc %>% officer::body_add_fpar(officer::fpar(officer::ftext("Worldwide Bureaucracy Indicators Analysis",prop=title_style)))
+      doc <- generate_intro_section(doc,selected_countries)
+      # Add each section with simple graphs
+      sections <- list(
+        list(title="Macro-Fundamentals of the Public Sector", data=wage_bill_publicexp %>% filter(country_name %in% selected_countries),
+             aes_x="year", aes_y="value", color="country_name", type="line", plot_title="Wage Bill as % of Public Expenditure"),
+        list(title="Public Sector Employment", data=public_sector_emp_temp_last %>% filter(country_name %in% selected_countries),
+             aes_x="country_name", aes_y="value_percentage", color="indicator_label", type="point", plot_title="Public Sector Employment (Last Year)"),
+        list(title="Tertiary Education", data=tertiary_education %>% filter(country_name %in% selected_countries),
+             aes_x="country_name", aes_y="value_percentage", color="indicator_name", type="bar", plot_title="Workers with Tertiary Education"),
+        list(title="Wage Premium", data=public_wage_premium %>% filter(country_name %in% selected_countries),
+             aes_x="country_name", aes_y="value_percentage", color=NULL, type="point", plot_title="Public Sector Wage Premium"),
+        list(title="Female Employment", data=gender_workforce %>% filter(country_name %in% selected_countries) %>% group_by(country_name,indicator_name) %>% slice_tail(n=1) %>% ungroup(),
+             aes_x="country_name", aes_y="value_percentage", color="indicator_name", type="bar", plot_title="Female Employment by Sector")
       )
-    
-    output$countryCount <- renderText({
-      paste("Total Countries with Data:", nrow(reported_countries))
-    })
-  })
+      for (s in sections) {
+        doc <- doc %>% officer::body_add_fpar(officer::fpar(officer::ftext(s$title,prop=section_style)))
+        if (!is.null(s$data)&&nrow(s$data)>0) {
+          p <- if (s$type=="line") {
+            ggplot(s$data,aes_string(x=s$aes_x,y=s$aes_y,color=s$color))+geom_line(size=1)+geom_point(size=2)
+          } else if (s$type=="bar") {
+            ggplot(s$data,aes_string(x=s$aes_x,y=s$aes_y,fill=s$color))+geom_col(position=position_dodge(0.8),width=0.7)
+          } else {
+            ggplot(s$data,aes_string(x=s$aes_x,y=s$aes_y,color=s$color))+geom_point(size=3)
+          }
+          p <- p + labs(title=s$plot_title)+theme_minimal()+theme(axis.text.x=element_text(angle=45,hjust=1))
+          img <- tempfile(fileext=".png"); ggsave(img,plot=p,width=7,height=4.5,dpi=300)
+          doc <- doc %>% officer::body_add_img(src=img,width=6.5,height=4)
+        }
+      }
+      print(doc,target=file)
+    }
+  )
   
+  output$downloadSelectedGraphsDoc <- downloadHandler(
+    filename=function() paste0("Wage_bill_and_public_employment_analysis_Selected_Report_",Sys.Date(),".docx"),
+    content=function(file) {
+      selected_countries <- input$download_report_countries
+      selected_sections  <- input$selected_graphs
+      doc <- officer::read_docx()
+      title_style <- fp_text(color="#722F37",font.size=20,bold=TRUE)
+      doc <- doc %>% body_add_fpar(fpar(ftext("Wage bill and public employment analysis",prop=title_style)))
+      doc <- generate_intro_section(doc,selected_countries)
+      if (is.null(selected_sections)||length(selected_sections)==0) {
+        doc <- doc %>% body_add_par("No sections selected for download.",style="Normal")
+      } else {
+        add_simple_graph <- function(doc, d, title, x, y, color=NULL, type="point") {
+          doc <- doc %>% body_add_par(title,style="heading 2")
+          if (!is.null(d)&&nrow(d)>0) {
+            p <- if (type=="line") ggplot(d,aes_string(x=x,y=y,color=color))+geom_line(size=1)+geom_point(size=2)
+            else if (type=="bar") ggplot(d,aes_string(x=x,y=y,fill=color))+geom_col(position=position_dodge(0.8),width=0.7)
+            else ggplot(d,aes_string(x=x,y=y,color=color))+geom_point(size=3)
+            p <- p+labs(title=title)+theme_minimal()+theme(axis.text.x=element_text(angle=45,hjust=1))
+            img <- tempfile(fileext=".png"); ggsave(img,plot=p,width=7,height=4.5,dpi=300)
+            doc <- doc %>% body_add_img(src=img,width=6.5,height=4)
+          }
+          return(doc)
+        }
+        if ("wagebill"            %in% selected_sections) doc <- add_simple_graph(doc, wage_bill_publicexp %>% filter(country_name %in% selected_countries), "Wage Bill as % of Public Expenditure","year","value","country_name","line")
+        if ("wagebill_gdp"        %in% selected_sections) doc <- add_simple_graph(doc, merged_data %>% filter(country_name %in% selected_countries), "Wage Bill vs GDP","log_gdp","indicator_value","country_name","point")
+        if ("tertiaryeducation"   %in% selected_sections) doc <- add_simple_graph(doc, tertiary_education %>% filter(country_name %in% selected_countries), "Tertiary Education","country_name","value_percentage","indicator_name","bar")
+        if ("public_employment"   %in% selected_sections) doc <- add_simple_graph(doc, public_sector_emp_temp_last %>% filter(country_name %in% selected_countries), "Public Sector Employment","country_name","value_percentage","indicator_label","point")
+        if ("wagepremium"         %in% selected_sections) doc <- add_simple_graph(doc, public_wage_premium %>% filter(country_name %in% selected_countries), "Wage Premium","country_name","value_percentage",NULL,"point")
+        if ("gender_workforce"    %in% selected_sections) doc <- add_simple_graph(doc, gender_workforce %>% filter(country_name %in% selected_countries) %>% group_by(country_name,indicator_name) %>% slice_tail(n=1) %>% ungroup(), "Female Employment by Sector","country_name","value_percentage","indicator_name","bar")
+        if ("gender_wage_premium" %in% selected_sections) doc <- add_simple_graph(doc, gender_wage_premiumpublic %>% filter(country_name %in% selected_countries,indicator_label %in% c("Public Administration","Education","Health")), "Gender Wage Premium by Industry","country_name","value_percentage","indicator_label","bar")
+        if ("pay_compression"     %in% selected_sections) doc <- add_simple_graph(doc, pay_compression_wide %>% filter(country_name %in% selected_countries) %>% mutate(Public_Sector=as.numeric(unlist(Public_Sector)),Private_Sector=as.numeric(unlist(Private_Sector))), "Pay Compression","Private_Sector","Public_Sector","country_name","point")
+      }
+      print(doc,target=file)
+    }
+  )
   
-  # Change info Box colors to "purple" to match the quartz theme
-  
-  output$numberIndicatorsBox <- renderInfoBox({
-    infoBox("Indicators", 302, icon = icon("list"), color = "purple")
-  })
-  
-  output$numberCountriesBox <- renderInfoBox({
-    infoBox("Economies", length(unique(data_wwbi$country_name)), icon = icon("globe"), color = "purple")
-  })
-  
-  output$temporalCoverageAnnualBox <- renderInfoBox({
-    infoBox("Temporal Coverage (Annual)", "2000-2022", icon = icon("calendar"), color = "purple")
-  })
-  
-  output$temporalCoverageYearsBox <- renderInfoBox({
-    infoBox("Temporal Coverage (Years)", "22", icon = icon("calendar"), color = "purple")
-  })
-  
-  output$lastUpdatedBox <- renderInfoBox({
-    infoBox("Last Updated", "2025", icon = icon("clock"), color = "purple")
-  })
+  output$downloadSelectedGraphsPPT <- downloadHandler(
+    filename=function() paste0("Wage_bill_and_public_employment_analysis_Selected_Presentation_",Sys.Date(),".pptx"),
+    content=function(file) {
+      selected_countries <- input$download_report_countries
+      selected_sections  <- input$selected_graphs
+      ppt <- officer::read_pptx() %>%
+        officer::add_slide(layout="Title Slide",master="Office Theme") %>%
+        officer::ph_with("Worldwide Bureaucracy Indicators",location=officer::ph_location_type(type="ctrTitle")) %>%
+        officer::ph_with(paste("Generated on",Sys.Date()),location=officer::ph_location_type(type="subTitle"))
+      add_slide_graph <- function(ppt, d, title, x, y, color=NULL, type="point") {
+        if (is.null(d)||nrow(d)==0) return(ppt)
+        p <- if (type=="line") ggplot(d,aes_string(x=x,y=y,color=color))+geom_line(size=1)+geom_point(size=2)
+        else if (type=="bar") ggplot(d,aes_string(x=x,y=y,fill=color))+geom_col(position=position_dodge(0.8),width=0.7)
+        else ggplot(d,aes_string(x=x,y=y,color=color))+geom_point(size=3)
+        p <- p+labs(title=title)+theme_minimal()+theme(axis.text.x=element_text(angle=45,hjust=1))
+        img <- tempfile(fileext=".png"); ggsave(img,plot=p,width=8,height=5,dpi=300)
+        ppt %>% officer::add_slide(layout="Title and Content",master="Office Theme") %>%
+          officer::ph_with(officer::external_img(img,height=5,width=7),location=officer::ph_location_type(type="body"))
+      }
+      if (!is.null(selected_sections)&&length(selected_sections)>0) {
+        if ("wagebill"            %in% selected_sections) ppt <- add_slide_graph(ppt, wage_bill_publicexp %>% filter(country_name %in% selected_countries), "Wage Bill as % of Public Expenditure","year","value","country_name","line")
+        if ("wagebill_gdp"        %in% selected_sections) ppt <- add_slide_graph(ppt, merged_data %>% filter(country_name %in% selected_countries), "Wage Bill vs GDP","log_gdp","indicator_value","country_name","point")
+        if ("tertiaryeducation"   %in% selected_sections) ppt <- add_slide_graph(ppt, tertiary_education %>% filter(country_name %in% selected_countries), "Tertiary Education","country_name","value_percentage","indicator_name","bar")
+        if ("public_employment"   %in% selected_sections) ppt <- add_slide_graph(ppt, public_sector_emp_temp_last %>% filter(country_name %in% selected_countries), "Public Sector Employment","country_name","value_percentage","indicator_label","point")
+        if ("wagepremium"         %in% selected_sections) ppt <- add_slide_graph(ppt, public_wage_premium %>% filter(country_name %in% selected_countries), "Wage Premium","country_name","value_percentage",NULL,"point")
+        if ("gender_workforce"    %in% selected_sections) ppt <- add_slide_graph(ppt, gender_workforce %>% filter(country_name %in% selected_countries) %>% group_by(country_name,indicator_name) %>% slice_tail(n=1) %>% ungroup(), "Female Employment","country_name","value_percentage","indicator_name","bar")
+        if ("gender_wage_premium" %in% selected_sections) ppt <- add_slide_graph(ppt, gender_wage_premiumpublic %>% filter(country_name %in% selected_countries,indicator_label %in% c("Public Administration","Education","Health")), "Gender Wage Premium by Industry","country_name","value_percentage","indicator_label","bar")
+        if ("pay_compression"     %in% selected_sections) ppt <- add_slide_graph(ppt, pay_compression_wide %>% filter(country_name %in% selected_countries) %>% mutate(Public_Sector=as.numeric(unlist(Public_Sector)),Private_Sector=as.numeric(unlist(Private_Sector))), "Pay Compression","Private_Sector","Public_Sector","country_name","point")
+      }
+      print(ppt,target=file)
+    }
+  )
   
 }
 
-
-shinyApp(ui = ui, server = server)
+shinyApp(ui=ui, server=server)
